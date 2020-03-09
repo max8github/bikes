@@ -1,0 +1,36 @@
+@startuml
+skinparam monochrome reverse
+
+title Reservation Lifecycle with Typed Actors and FSM
+[Alice] --> (INIT): POST /bike
+(INIT) --> (DOWNLOADING): download()
+(DOWNLOADING) --> (INIT): timeout
+
+(DOWNLOADING) --> (DOWNLOADED): download() \nreturned\nsuccessfully
+(DOWNLOADING) --> (DOWNLOADING): download() failed,\nretry 3 times
+(DOWNLOADING) --> (ERRORSTATE): timeout
+(CREATING) --> (ERRORSTATE): timeout
+(RESERVING) --> (ERRORSTATE): timeout
+(YIELDING) --> (ERRORSTATE): timeout
+(DOWNLOADED) <-- (ERRORSTATE): kick
+(CREATED) <-- (ERRORSTATE): kick
+(RESERVED) <-- (ERRORSTATE): kick
+(YIELDING) --> (ERRORSTATE): timeout
+(DOWNLOADED) --> (CREATING): create()
+(CREATING) --> (CREATED): create()\ncompleted\nsuccessfully
+(CREATING) --> (CREATING): create() failed,\nretry 3 times
+
+(CREATED) --> (RESERVING): reserve()
+(CREATED) --> (YIELDING): yield()
+
+(RESERVING) --> (RESERVED): reserve() \nreturned\nsuccessfully
+(RESERVING) --> (RESERVING): reserve() failed,\nretry 3 times
+
+
+(RESERVED) --> (YIELDING): yield()
+(YIELDED) --> (RESERVING): reserve()
+
+(YIELDING) --> (YIELDED): yield() \nreturned\nsuccessfully
+(YIELDING) --> (YIELDING): yield() failed,\nretry 3 times
+
+@enduml

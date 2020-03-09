@@ -1,0 +1,20 @@
+@startuml
+skinparam monochrome reverse
+
+title Reservation Request Lifecycle States
+[Alice - Frontend] -right-> (INIT): POST /bike
+(INIT) --> (INIT): download() 3-FAILED
+(INIT) --> (DOWNLOADED): download() ok
+
+(DOWNLOADED) --> (DOWNLOADED): create() 3-FAILED
+(DOWNLOADED) --> (CREATED): create() ok
+
+(CREATED) --> (CREATED): reserve() 3-FAILED
+(CREATED) --> (RESERVED): reserve() ok
+
+(RESERVED) --> (YIELDED): yield() ok
+(RESERVED) --> (RESERVED): yield() 3-FAILED
+
+(YIELDED) --> (YIELDED): reserve() 3-FAILED
+(RESERVED) <-- (YIELDED): reserve() ok
+@enduml

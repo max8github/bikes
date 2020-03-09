@@ -1,0 +1,47 @@
+@startuml
+skinparam monochrome reverse
+
+title POST Request
+
+HTTP -> Manager: new request
+Manager -> ShardRegion: new FSM
+ShardRegion -> FSMstate: InitState
+ShardRegion -> FSMcmdHandler: RetrieveCmd
+FSMcmdHandler -> Procurement: SomeOperation("retrieve")
+FSMcmdHandler -> FSMevtHandler: persist(RetrieveEvent)
+FSMcmdHandler -> GlobalTreeActor: UpdateTree
+FSMevtHandler -> FSMstate: RetrievingState
+...
+Procurement -> FSMcmdHandler: OpCompleted
+FSMcmdHandler -> FSMevtHandler: persist(RetrievedEvt)
+FSMcmdHandler -> GlobalTreeActor: UpdateTree
+FSMevtHandler -> FSMstate: RetrievedState
+FSMstate -> FSMcmdHandler: buildBike()
+FSMcmdHandler -> FSMcmdHandler: CreateCmd
+
+FSMcmdHandler -> Procurement: SomeOperation("create")
+FSMcmdHandler -> FSMevtHandler: persist(CreateEvent)
+FSMcmdHandler -> GlobalTreeActor: UpdateTree
+FSMevtHandler -> FSMstate: CreatingState
+...
+Procurement -> FSMcmdHandler: OpCompleted
+FSMcmdHandler -> FSMevtHandler: persist(CreatedEvt)
+FSMcmdHandler -> GlobalTreeActor: UpdateTree
+FSMevtHandler -> FSMstate: CreatedState
+FSMstate -> FSMcmdHandler: reserve()
+FSMcmdHandler -> FSMcmdHandler: ReserveCmd
+
+FSMcmdHandler -> Procurement: SomeOperation("reserve")
+FSMcmdHandler -> FSMevtHandler: persist(ReserveEvent)
+FSMcmdHandler -> GlobalTreeActor: UpdateTree
+FSMevtHandler -> FSMstate: ReservingState
+...
+Procurement -> FSMcmdHandler: OpCompleted
+FSMcmdHandler -> FSMevtHandler: persist(ReservedEvt)
+FSMcmdHandler -> GlobalTreeActor: UpdateTree
+FSMevtHandler -> FSMstate: ReservedState
+...
+HTTP -> Manager: done yet?
+HTTP <- Manager: yes, location()
+
+@enduml

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Silence initial setup logging from Logback -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>%date{ISO8601} %-5level %logger %X{akkaSource} %X{sourceThread} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+    Logging from tests are silenced by this appender. When there is a test failure
+    the captured logging events are flushed to the appenders defined for the
+    akka.actor.testkit.typed.internal.CapturingAppenderDelegate logger.
+    -->
+    <appender name="CapturingAppender" class="akka.actor.testkit.typed.internal.CapturingAppender" />
+
+    <!--
+    The appenders defined for this CapturingAppenderDelegate logger are used
+    when there is a test failure and all logging events from the test are
+    flushed to these appenders.
+    -->
+
+
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%-5level] - %msg %ex{1}%n</pattern>
+        </encoder>
+        <immediateFlush>false</immediateFlush>
+    </appender>
+
+
+    <!--<logger name="io.gatling.compiler" level="DEBUG" />-->
+    <logger name="akka.sample.bikes" level="DEBUG" />
+    <logger name="io.gatling" level="DEBUG" />
+    <logger name="io.gatling.http.client" level="DEBUG" />
+    <logger name="akka.event.slf4j" level="WARN" />
+    <logger name="jodd.lagarto.dom" level="ERROR" />
+
+
+    <!--Uncomment for logging ALL HTTP request and responses-->
+    <!--<logger name="io.gatling.http.ahc" level="TRACE" />-->
+    <!--<logger name="io.gatling.http.response" level="TRACE" />-->
+    <!--Uncomment for logging ONLY FAILED HTTP request and responses-->
+    <!--<logger name="io.gatling.http.ahc" level="DEBUG" />-->
+    <!--<logger name="io.gatling.http.response" level="DEBUG" />-->
+
+    <!--
+    <root level="ERROR">
+    <root level="INFO">
+    <root level="DEBUG">
+    -->
+
+
+
+    <logger name="akka.actor.testkit.typed.internal.CapturingAppenderDelegate" >
+      <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <root level="DEBUG">
+        <appender-ref ref="CapturingAppender"/>
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>

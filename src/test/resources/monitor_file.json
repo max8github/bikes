@@ -1,0 +1,41 @@
+{
+  "children": [{
+    "children": [{
+      "children": [{
+        "children": [],
+        "events": 0,
+        "name": "bike311",
+        "type": "entity"
+      }],
+      "events": 0,
+      "name": "shard31",
+      "type": "shard"
+    }],
+    "events": 0,
+    "name": "m3",
+    "type": "member"
+  }, {
+    "children": [],
+    "events": 0,
+    "name": "m1",
+    "type": "member"
+  }, {
+    "children": [{
+      "children": [],
+      "events": 0,
+      "name": "shard1",
+      "type": "shard"
+    }, {
+      "children": [],
+      "events": 0,
+      "name": "shard2",
+      "type": "shard"
+    }],
+    "events": 0,
+    "name": "m2",
+    "type": "member"
+  }],
+  "events": 0,
+  "name": "one",
+  "type": "cluster"
+}

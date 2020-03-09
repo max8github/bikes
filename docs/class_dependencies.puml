@@ -1,0 +1,11 @@
+@startuml
+
+(BikeRoutes) -> (FleetsMaster)
+(BikeRoutes) <- (FleetsMaster)
+(FleetsMaster) -> (Bike)
+(Bike) -down-> (Procurement)
+(BikeRoutes) -down-> (GlobalTreeActor)
+(Bike) -> (GlobalTreeActor)
+(ClusterListener) -up-> (GlobalTreeActor)
+
+@enduml

@@ -1,0 +1,484 @@
+{
+	"info": {
+		"_postman_id": "f02bd15c-2709-4f4c-a3c2-f48f6e5f0f80",
+		"name": "BikeService",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Create new",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							"function create_UUID(){",
+							"    var dt = new Date().getTime();",
+							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+							"        var r = (dt + Math.random()*16)%16 | 0;",
+							"        dt = Math.floor(dt/16);",
+							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
+							"    });",
+							"    return uuid;",
+							"}",
+							"",
+							"var version_uuid = create_UUID();",
+							"postman.setEnvironmentVariable(\"version_uuid\", version_uuid);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
+						"exec": [
+							"pm.environment.set(\"bikeId\", pm.response.text());",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"instructions\": {\"version\":\"{{version_uuid}}\", \"location\":\"git@github.com:blueprints/myblueprint.git\"}, \"bom\":{\"version\":\"\", \"location\":\"\"}, \"mechanic\": {\"version\":\"\", \"location\":\"\"}, \"access\":\"\"}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bike",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bike"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Restart",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"instructions\": {\"version\":\"{{version_uuid}}\", \"location\":\"git@github.com:blueprints/myblueprint.git\"}, \"bom\":{\"version\":\"\", \"location\":\"\"}, \"mechanic\": {\"version\":\"\", \"location\":\"\"}, \"access\":\"\"}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bike",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bike"
+					]
+				},
+				"description": "This is to kick an entity actor that got stuck in its initial state. It is like a regular 'Create new', a POST: it needs a blueprint payload."
+			},
+			"response": []
+		},
+		{
+			"name": "Get Inventory",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "703cc830-b177-470b-aff8-042557d62307",
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"if(jsonData.entities.length > 0) {",
+							"    pm.environment.set(\"bikeId\", jsonData.entities[0].id);",
+							"}",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bike",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bike"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bike/{{bikeId}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bike",
+						"{{bikeId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Kick",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bike/{{bikeId}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bike",
+						"{{bikeId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Id",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"instructions\": {\"version\":\"{{version_uuid}}\", \"location\":\"git@github.com:blueprints/myblueprint.git\"}, \"bom\":{\"version\":\"\", \"location\":\"\"}, \"mechanic\": {\"version\":\"\", \"location\":\"\"}, \"access\":\"\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bikeid",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bikeid"
+					]
+				},
+				"description": "Given the blueprint, calculates the entity id."
+			},
+			"response": []
+		},
+		{
+			"name": "Reserve",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/reserve/{{bikeId}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reserve",
+						"{{bikeId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Unreserve",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/reserve/{{bikeId}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reserve",
+						"{{bikeId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Passivate",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/bike/{{bikeId}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"bike",
+						"{{bikeId}}"
+					]
+				},
+				"description": "Will remove entity node from the tree."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "ec092751-eb58-4fc9-8b84-87c1df38c95e",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "2ad59958-8bdc-4ebd-9fd0-b625a5236d6f",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
