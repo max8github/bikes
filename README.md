@@ -281,6 +281,10 @@ sbt gatling:test
 The load tester will run for some time (configure it in this class) creating lots of requests. Visualize what is happening by
 going to [http://127.0.0.1:8084/monitor/monitor.html](http://127.0.0.1:8084/monitor/monitor.html)
 
+#### Troubleshooting
+You may need to set `JAVA_HOME` to 1.8, if you get `java.net.SocketException: Socket closed` errors.
+
+
 ### Postman Client
 Install postman and then import [collection](postman/BikeService.postman_collection.json) and  
 [environment](postman/BikeService.postman_environment.json) present in directory [postman](postman).

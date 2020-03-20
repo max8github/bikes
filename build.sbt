@@ -39,7 +39,6 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-    "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "org.scalatest" %% "scalatest" % "3.0.8" % Test,
     "io.gatling.highcharts" % "gatling-charts-highcharts" % gatlingVersion % Test,
     "io.gatling" % "gatling-test-framework" % gatlingVersion % Test,

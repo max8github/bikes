@@ -19,10 +19,8 @@ class BikeCreation extends Simulation {
     "content-type" -> "application/json",
     "accept" -> "application/json, text/plain, */*")
 
-  lazy val generateUuid: Expression[Session] = { session =>
-    val bikeId = UUID.randomUUID()
-    session.set("bikeId", bikeId)
-  }
+  /** Used to create random blueprints (see bike.json) */
+  lazy val generateUuid: Expression[Session] = _.set("randomId", UUID.randomUUID())
 
   lazy val createBike = http("create bike")
     .post("/bike")
