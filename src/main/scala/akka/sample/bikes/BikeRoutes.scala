@@ -69,6 +69,7 @@ private[bikes] final class BikeRoutes(
                     val resp =
                       if (st.endsWith("$")) st.replace("$", "")
                       else if (st.startsWith("Error")) performed.state.toString
+                      else if (st.contains("Reserved")) performed.state.toString
                       else st
                     complete(StatusCodes.OK -> resp)
                   case Failure(_) => complete(StatusCodes.NotFound)

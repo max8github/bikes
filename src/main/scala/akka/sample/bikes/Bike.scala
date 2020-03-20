@@ -1,5 +1,6 @@
 package akka.sample.bikes
 
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 import akka.actor.typed._
@@ -12,6 +13,7 @@ import JsonSupport._
 import Procurement._
 import akka.sample.bikes.tree.{ GlobalTreeActor, NodePath }
 import spray.json._
+import scala.language.implicitConversions
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -25,7 +27,7 @@ object Bike {
   final case class DownloadEvent(blueprint: Blueprint) extends Event
   final case class DownloadedEvt(blueprint: Blueprint) extends Event
   final case class CreateEvent(blueprint: Blueprint) extends Event
-  final case class CreatedEvt(blueprint: Blueprint) extends Event
+  final case class CreatedEvt(blueprint: Blueprint, location: NiUri) extends Event
   final case class ReserveEvent(blueprint: Blueprint) extends Event
   final case class ReservedEvt(blueprint: Blueprint) extends Event
   final case class YieldEvent(blueprint: Blueprint) extends Event
@@ -84,11 +86,11 @@ object Bike {
   final case class DownloadingState(blueprint: Blueprint) extends State
   final case class DownloadedState(blueprint: Blueprint) extends State
   final case class CreatingState(blueprint: Blueprint) extends State
-  final case class CreatedState(blueprint: Blueprint) extends State
-  final case class ReservingState(blueprint: Blueprint) extends State
-  final case class ReservedState(blueprint: Blueprint) extends State
-  final case class YieldingState(blueprint: Blueprint) extends State
-  final case class YieldedState(blueprint: Blueprint) extends State
+  final case class CreatedState(blueprint: Blueprint, location: NiUri = NiUri("e7701e-1ea1e", "https://www.bikes.com/location}")) extends State
+  final case class ReservingState(blueprint: Blueprint, location: NiUri) extends State
+  final case class ReservedState(blueprint: Blueprint, location: NiUri) extends State
+  final case class YieldingState(blueprint: Blueprint, location: NiUri) extends State
+  final case class YieldedState(blueprint: Blueprint, location: NiUri) extends State
   final case class ErrorState(msg: String, offendingCommand: Command, lastState: State) extends State {
     override def toString: String = s"ErrorState('$msg', ${offendingCommand.getClass.getSimpleName}, ${lastState.getClass.getSimpleName})"
   }
@@ -169,7 +171,8 @@ object Bike {
                 Behaviors.same
             }.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.none)
 
-        //This is a timeout for entities that have been idle for while. It is different from fsmTimeout.
+        // This is a timeout for entities that have been idle for while (no GET requests). It is different from the
+        // fsm-timeout, which is used to time out a FSM entity for not reaching its end state in a reasonable time.
         //See https://doc.akka.io/docs/akka/current/typed/cluster-sharding.html?#passivation
         val receiveTimeout = FiniteDuration(
           context.system.settings.config.getDuration("bikes.receive-timeout").toMillis,
@@ -227,7 +230,8 @@ object Bike {
 
     def created(reply: Reply): Effect[Event, State] = reply match {
       case OpCompleted(blueprint) =>
-        val evt = CreatedEvt(blueprint)
+        //OpCompleted from a real service should contain also location information. Generate randomly here
+        val evt = CreatedEvt(blueprint, NiUri(UUID.randomUUID().toString, s"www.bikes.com/locations/${blueprint.makeEntityId()}"))
         Effect.persist(evt).thenRun { newState =>
           context.log.info2("Bike {} created, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
@@ -249,7 +253,7 @@ object Bike {
       Effect.none
     }
 
-    def reserve(blueprint: Blueprint): Effect[Event, State] = {
+    def reserve(blueprint: Blueprint, location: NiUri): Effect[Event, State] = {
       ops ! SomeOperation(blueprint, replyToMapper, "reserve()")
       val evt = ReserveEvent(blueprint)
       Effect.persist(evt).thenRun { newState =>
@@ -259,7 +263,7 @@ object Bike {
       }
     }
 
-    def reserved(reply: Reply): Effect[Event, State] = reply match {
+    def reserved(reply: Reply, location: NiUri): Effect[Event, State] = reply match {
       case OpCompleted(blueprint) =>
         val evt = ReservedEvt(blueprint)
         Effect.persist(evt).thenRun { newState =>
@@ -269,7 +273,7 @@ object Bike {
         }
 
       case OpFailed(blueprint, errorMessage) =>
-        val evt = ErrorEvent(errorMessage, CreatedState(blueprint), ReserveCmd)
+        val evt = ErrorEvent(errorMessage, CreatedState(blueprint, location), ReserveCmd)
         Effect.persist(evt).thenRun { newState: State =>
           context.log.info2("ERROR while reserving Bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
@@ -287,7 +291,7 @@ object Bike {
       }
     }
 
-    def yielded(reply: Reply): Effect[Event, State] = reply match {
+    def yielded(reply: Reply, location: NiUri): Effect[Event, State] = reply match {
       case OpCompleted(blueprint) =>
         val evt = YieldedEvt(blueprint)
         Effect.persist(evt).thenRun { newState =>
@@ -297,7 +301,7 @@ object Bike {
         }
 
       case OpFailed(blueprint, errorMessage) =>
-        val evt = ErrorEvent(errorMessage, ReservedState(blueprint), YieldCmd)
+        val evt = ErrorEvent(errorMessage, ReservedState(blueprint, location), YieldCmd)
         Effect.persist(evt).thenRun { newState: State =>
           context.log.info2("ERROR while reserving bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
@@ -335,13 +339,13 @@ object Bike {
           }
         }
         st match {
-          case ReservedState(_) | YieldedState(_) | ErrorState(_, _, _) | InitState => Effect.none
+          case ReservedState(_, _) | YieldedState(_, _) | ErrorState(_, _, _) | InitState => Effect.none
           case DownloadingState(c) => goBack(InitState, DownloadCmd(c))
           case DownloadedState(c) => goBack(DownloadedState(c), CreateCmd(c))
           case CreatingState(c) => goBack(DownloadedState(c), CreateCmd(c))
-          case CreatedState(c) => goBack(CreatedState(c), ReserveCmd)
-          case ReservingState(c) => goBack(CreatedState(c), ReserveCmd)
-          case YieldingState(c) => goBack(ReservedState(c), YieldCmd)
+          case c: CreatedState => goBack(c, ReserveCmd)
+          case ReservingState(c, location) => goBack(CreatedState(c, location), ReserveCmd)
+          case YieldingState(c, location) => goBack(ReservedState(c, location), YieldCmd)
         }
 
       case (_, GoodBye) =>
@@ -377,33 +381,33 @@ object Bike {
               case _ => Effect.unhandled
             }
 
-          case CreatedState(blueprint) =>
+          case CreatedState(blueprint, location) =>
             command match {
-              case ReserveCmd => reserve(blueprint)
+              case ReserveCmd => reserve(blueprint, location)
               case _ => Effect.unhandled
             }
 
-          case YieldedState(blueprint) =>
+          case YieldedState(blueprint, location) =>
             command match {
-              case ReserveCmd => reserve(blueprint)
+              case ReserveCmd => reserve(blueprint, location)
               case _ => Effect.unhandled
             }
 
-          case _: ReservingState =>
+          case ReservingState(_, location) =>
             command match {
-              case AdaptedReply(reply) => reserved(reply)
+              case AdaptedReply(reply) => reserved(reply, location)
               case _ => Effect.unhandled
             }
 
-          case ReservedState(blueprint) =>
+          case ReservedState(blueprint, _) =>
             command match {
               case YieldCmd => `yield`(blueprint)
               case _ => Effect.unhandled
             }
 
-          case _: YieldingState =>
+          case YieldingState(_, location) =>
             command match {
-              case AdaptedReply(reply) => yielded(reply)
+              case AdaptedReply(reply) => yielded(reply, location)
               case _ => Effect.unhandled
             }
 
@@ -447,37 +451,37 @@ object Bike {
 
         case state: CreatingState =>
           event match {
-            case CreatedEvt(id) => CreatedState(id)
+            case CreatedEvt(blueprint, location) => CreatedState(blueprint, location)
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
-        case state: CreatedState =>
+        case CreatedState(_, location) =>
           event match {
-            case ReserveEvent(blueprint) => ReservingState(blueprint)
+            case ReserveEvent(blueprint) => ReservingState(blueprint, location)
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
-        case state: YieldedState =>
+        case YieldedState(_, location) =>
           event match {
-            case ReserveEvent(blueprint) => ReservingState(blueprint)
+            case ReserveEvent(blueprint) => ReservingState(blueprint, location)
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
-        case state: ReservingState =>
+        case ReservingState(_, location) =>
           event match {
-            case ReservedEvt(id) => ReservedState(id)
+            case ReservedEvt(blueprint) => ReservedState(blueprint, location)
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
-        case state: ReservedState =>
+        case ReservedState(_, location) =>
           event match {
-            case YieldEvent(blueprint) => YieldingState(blueprint)
+            case YieldEvent(blueprint) => YieldingState(blueprint, location)
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
-        case state: YieldingState =>
+        case YieldingState(_, location) =>
           event match {
-            case YieldedEvt(blueprint) => YieldedState(blueprint)
+            case YieldedEvt(blueprint) => YieldedState(blueprint, location)
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
