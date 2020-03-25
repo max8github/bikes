@@ -57,16 +57,15 @@ package object bikes {
     implicit val creatingFormat = jsonFormat1(Bike.CreatingState)
     implicit val createdFormat = jsonFormat2(Bike.CreatedState)
     implicit val reservingFormat = jsonFormat2(Bike.ReservingState)
-    implicit val reservedFormat = jsonFormat2(Bike.ReservedState)
     implicit val yieldingFormat = jsonFormat2(Bike.YieldingState)
-    implicit val yieldedFormat = jsonFormat2(Bike.YieldedState)
 
     implicit object ErrorStateJsonFormat extends JsonFormat[Bike.ErrorState] {
       def write(c: Bike.ErrorState) = JsObject(
+        "name" -> JsString("ErrorState"),
         "msg" -> JsString(c.msg),
         "offendingCommand" -> JsString(c.offendingCommand.getClass.getSimpleName),
         "lastState" -> JsString(c.lastState.getClass.getSimpleName))
-      def read(value: JsValue) = {
+      def read(value: JsValue): Bike.ErrorState = {
         value.asJsObject.getFields("msg", "offendingCommand", "lastState") match {
           case Seq(JsString(msg), JsString(_), JsString(_)) => Bike.ErrorState(msg, Bike.KickCmd, Bike.InitState)
           case _ => throw new DeserializationException("ErrorState expected")
@@ -74,17 +73,41 @@ package object bikes {
       }
     }
 
+    implicit object ReservedStateJsonFormat extends JsonFormat[Bike.ReservedState] {
+      def write(c: Bike.ReservedState) = JsObject(
+        "name" -> JsString("ReservedState"),
+        "location" -> c.location.toJson)
+      def read(value: JsValue): Bike.ReservedState = {
+        value.asJsObject.getFields("blueprint", "location") match {
+          case Seq(blueprint, location) => Bike.ReservedState(blueprint.convertTo[Bike.Blueprint], location.convertTo[Bike.NiUri])
+          case _ => throw DeserializationException("ReservedState expected")
+        }
+      }
+    }
+
+    implicit object YieldedStateJsonFormat extends JsonFormat[Bike.YieldedState] {
+      def write(c: Bike.YieldedState) = JsObject(
+        "name" -> JsString("YieldedState"),
+        "location" -> c.location.toJson)
+      def read(value: JsValue): Bike.YieldedState = {
+        value.asJsObject.getFields("blueprint", "location") match {
+          case Seq(blueprint, location) => Bike.YieldedState(blueprint.convertTo[Bike.Blueprint], location.convertTo[Bike.NiUri])
+          case _ => throw DeserializationException("YieldedState expected")
+        }
+      }
+    }
+
     implicit object StateFormat extends RootJsonFormat[Bike.State] {
       def write(obj: Bike.State): JsValue =
         JsObject((obj match {
-          case Bike.InitState => JsString("init")
-          case c: Bike.DownloadingState => c.toJson
-          case c: Bike.DownloadedState => c.toJson
-          case c: Bike.CreatingState => c.toJson
-          case c: Bike.CreatedState => c.toJson
-          case c: Bike.ReservingState => c.toJson
+          case Bike.InitState => JsObject("name" -> JsString("InitState"))
+          case c: Bike.DownloadingState => JsObject("name" -> JsString("DownloadingState"))
+          case c: Bike.DownloadedState => JsObject("name" -> JsString("DownloadedState"))
+          case c: Bike.CreatingState => JsObject("name" -> JsString("CreatingState"))
+          case c: Bike.CreatedState => JsObject("name" -> JsString("CreatedState"))
+          case c: Bike.ReservingState => JsObject("name" -> JsString("ReservingState"))
           case c: Bike.ReservedState => c.toJson
-          case c: Bike.YieldingState => c.toJson
+          case c: Bike.YieldingState => JsObject("name" -> JsString("YieldingState"))
           case c: Bike.YieldedState => c.toJson
           case a: Bike.ErrorState => a.toJson
           case unknown => deserializationError(s"json deserialize error: $unknown")
