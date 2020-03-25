@@ -63,15 +63,8 @@ private[bikes] final class BikeRoutes(
             concat(
               get {
                 val f: Future[BikeRoutes.QueryStatus] = guardian.ask(replyTo => FleetsMaster.GetBike(bikeId, replyTo))
-                onComplete(f) {
-                  case Success(performed) =>
-                    val st = performed.state.getClass.getSimpleName
-                    val resp =
-                      if (st.endsWith("$")) st.replace("$", "")
-                      else if (st.startsWith("Error")) performed.state.toString
-                      else st
-                    complete(StatusCodes.OK -> resp)
-                  case Failure(_) => complete(StatusCodes.NotFound)
+                onSuccess(f) { performed =>
+                  complete(StatusCodes.OK -> performed)
                 }
               },
               put {
