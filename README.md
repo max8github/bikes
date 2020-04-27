@@ -15,7 +15,7 @@ Other components this service interacts with are:
 A good client to generate automatically lots of requests is [Gatling](https://gatling.io/): see [below](#gatling-client)
 for instructions.  
 A [Postman](https://www.postman.com/) [collection](postman/BikeService.postman_collection.json) can also be used to
-send requests manually ([see below](#postman-client).  
+send requests manually ([see below](#postman-client)).  
 Opening a browser on [localhost](http://127.0.0.1:8084/monitor/monitor.html) will show cluster's behavior like shard
 rebalancing, nodes joining, requests evolving etc.  
 This is the same UI as in Hugh McKee's [crop circles](https://www.youtube.com/watch?v=CjkiznureoU&t=1563s)
@@ -51,6 +51,19 @@ See [Run](#run) for more detailed instructions.
 > Note: the default store when running locally is in-memory, as by default [application_local.conf](src/main/resources/application_local.conf)  
 > has `akka.persistence.journal.plugin = "akka.persistence.journal.inmem"`.  
 > To use [Cassandra](docs/Cassandra.md), see [below](#1-a-3-node-cluster-running-locally).
+
+
+
+                     -----\                                             
+          c-->        ____/                                             
+            \\         \\                                               
+       _D---------------\\.__    
+      /   |  \\       /  \\  \  
+     /    |   \\ 7   /   ||   '
+     |    o===== o-- |    o    | 
+      \       /  L    \       / 
+       \___. /         \___. /   
+
 
 # Bikes Service
 This code represents an imaginary service for renting custom-made bicycles.  
@@ -96,7 +109,7 @@ The entity actor is modeled as an FSM and represents the entire bike provisionin
 From request to construction to reservation, a bike request goes through different phases, including downloading the blueprint,
 building the bike, reserving it, un-reserving it, setting it in error state.  
 You can only un-reserve a bike that is reserved, or vice-versa, and can only get out of an error state with a
-kicking action (see the FSM state diagram [here](docs/fsm.puml).
+kick action (see the FSM state diagram [here](docs/fsm.puml).
 
 If the entity is passivated (perhaps because the bike has not been used in a long time), it can be restored at a later
 time for further processing (see also [LMDB](docs/Code.md#remembering-entities)).
