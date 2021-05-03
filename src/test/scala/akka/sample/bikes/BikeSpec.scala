@@ -7,12 +7,12 @@ import akka.sample.bikes.Procurement.{ OpCompleted, SetMaxFailures, SetMode, Set
 import akka.sample.bikes.Bike._
 import akka.sample.bikes.tree.GlobalTreeActor
 import com.typesafe.config.ConfigFactory
-import org.scalatest.WordSpecLike
+import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class BikeSpec extends ScalaTestWithActorTestKit with WordSpecLike with LogCapturing {
+class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCapturing {
 
   val numShards = ConfigFactory.defaultApplication().getInt("akka.cluster.sharding.number-of-shards")
 

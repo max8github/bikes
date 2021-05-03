@@ -6,14 +6,15 @@ organization in ThisBuild := "me.rerun"
 
 name := """bikes"""
 
-version := "0.2.1"
+version := "0.3"
 
-scalaVersion := "2.12.0"
-lazy val akkaHttpVersion = "10.1.11"
-lazy val akkaVersion    = "2.6.1"
-lazy val akkaCassandraVersion    = "0.102"//"1.0.0-M0"
+scalaVersion := "2.13.5"
+lazy val akkaHttpVersion = "10.2.4"
+lazy val akkaVersion    = "2.6.14"
+lazy val akkaCassandraVersion    = "1.0.5"
+lazy val scalatestVersion = "3.2.8"
 val gatlingBundleName = "gatling-charts-highcharts-bundle"
-val gatlingVersion = "3.0.1"
+val gatlingVersion = "3.5.1"
 
 enablePlugins(GatlingPlugin)
 
@@ -39,7 +40,8 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
-    "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+    "org.scalatest" %% "scalatest" % scalatestVersion % Test,
+    "org.scalatest" %% "scalatest-wordspec" % scalatestVersion % Test,
     "io.gatling.highcharts" % "gatling-charts-highcharts" % gatlingVersion % Test,
     "io.gatling" % "gatling-test-framework" % gatlingVersion % Test,
     "io.gatling.highcharts" % gatlingBundleName % gatlingVersion artifacts (Artifact(gatlingBundleName, "zip", "zip", "bundle")) exclude("com.github.scopt", "scopt_2.10"),
@@ -79,7 +81,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-distributed-data" % akkaVersion,//transitive to set
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,//transitive to set
 
-    "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.5",
-    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.5"
+    "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.10",
+    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.10"
   )
 }

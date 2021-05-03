@@ -1,9 +1,10 @@
 package akka.sample.bikes
 
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ Matchers, WordSpec }
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class ShaValidationSpec extends WordSpec with Matchers with ScalaFutures {
+class ShaValidationSpec extends AnyWordSpec with Matchers with ScalaFutures {
 
   "BikeService validation" should {
     "verify sha1 and sha256" in {
