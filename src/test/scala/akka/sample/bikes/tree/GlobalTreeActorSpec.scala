@@ -2,10 +2,12 @@ package akka.sample.bikes.tree
 
 import akka.actor.testkit.typed.scaladsl.{ BehaviorTestKit, TestInbox }
 import akka.sample.bikes.tree.NodeProtocol._
-import org.scalatest.{ BeforeAndAfterAll, FunSpecLike, MustMatchers }
+import org.scalatest.funspec.AnyFunSpecLike
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.must.Matchers
 import spray.json._
 
-class GlobalTreeActorSpec extends MustMatchers with FunSpecLike
+class GlobalTreeActorSpec extends Matchers with AnyFunSpecLike
   with BeforeAndAfterAll {
 
   describe("The Global Tree") {

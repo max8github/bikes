@@ -1,6 +1,7 @@
 package akka.sample.bikes.tree
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import spray.json._
 
 /**
@@ -19,7 +20,7 @@ import spray.json._
  * //      Leaf(0)
  * //  }
  */
-class JsonTreeTest extends FlatSpec with Matchers {
+class JsonTreeTest extends AnyFlatSpec with Matchers {
 
   def findEntityWithPath(root: Node, path: NodePath): Option[Node] = {
     for {
