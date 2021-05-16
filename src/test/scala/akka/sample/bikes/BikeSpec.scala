@@ -4,7 +4,6 @@ import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestK
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.sample.bikes.Procurement.{ OpCompleted, SetMaxFailures, SetMode, SetSpeed, SomeOperation }
-import akka.sample.bikes.Bike._
 import akka.sample.bikes.tree.GlobalTreeActor
 import com.typesafe.config.ConfigFactory
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -81,12 +80,12 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
 
       val blueprint = Blueprint(NiUri("cc4c41e", "e1ea1e"))
 
-      val probe = createTestProbe[Bike.Command]()
+      val probe = createTestProbe[Command]()
       val mockedBike = spawn(Behaviors.monitor(probe.ref, Bike(blueprint.makeEntityId(), procurement, tree, clusterShard, numShards)))
 
       mockedBike ! DownloadCmd(blueprint)
-      probe.expectMessageType[Bike.DownloadCmd](10 seconds)
-      //      val msg = probe.expectMessageType[Bike.AdaptedReply](10 seconds)
+      probe.expectMessageType[DownloadCmd](10 seconds)
+      //      val msg = probe.expectMessageType[AdaptedReply](10 seconds)
       //      msg.response shouldBe OpCompleted(blueprint)
     }
   }
