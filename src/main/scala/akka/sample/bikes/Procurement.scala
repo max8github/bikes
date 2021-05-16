@@ -24,9 +24,6 @@ object Procurement {
   case class SetMaxFailures(failCount: Int) extends AdminOperation
   case class SetMode(isRandom: Boolean) extends AdminOperation
   case class SetSpeed(processingTime: Long) extends AdminOperation
-  sealed trait Reply
-  case class OpCompleted(blueprint: Blueprint) extends Reply
-  case class OpFailed(blueprint: Blueprint, reason: String) extends Reply
 
   val random = new Random()
   /** Sets the number of times the external service will fail consecutively before responding. Useful for simulating retries. */

@@ -53,7 +53,11 @@ package object bikes {
    *
    * @param response response from external service
    */
-  final case class AdaptedReply(response: Procurement.Reply) extends akka.sample.bikes.Command
+  final case class AdaptedReply(response: Reply) extends akka.sample.bikes.Command
+
+  sealed trait Reply
+  case class OpCompleted(blueprint: Blueprint) extends Reply
+  case class OpFailed(blueprint: Blueprint, reason: String) extends Reply
 
   sealed trait State
   final case object InitState extends State
