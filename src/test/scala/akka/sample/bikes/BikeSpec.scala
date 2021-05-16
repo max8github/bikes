@@ -3,8 +3,7 @@ package akka.sample.bikes
 import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestKit }
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
-import akka.sample.bikes.Procurement.{ OpCompleted, SetMaxFailures, SetMode, SetSpeed, SomeOperation }
-import akka.sample.bikes.Bike._
+import akka.sample.bikes.Procurement.{ SetMaxFailures, SetMode, SetSpeed, SomeOperation }
 import akka.sample.bikes.tree.GlobalTreeActor
 import com.typesafe.config.ConfigFactory
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -22,7 +21,7 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       val procurement = spawn(Procurement(system))
       procurement ! Procurement.SetSpeed(400L)
       val blueprint = Blueprint(NiUri("fac4c41e", "git@github"))
-      val probe = createTestProbe[Procurement.Reply]()
+      val probe = createTestProbe[Reply]()
       procurement ! SomeOperation(blueprint, probe.ref, "download")
       val msg = probe.receiveMessage(20.seconds)
       println(s"Received message: $msg")
@@ -34,9 +33,9 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       procurement ! Procurement.SetMode(false)
       procurement ! Procurement.SetMaxFailures(4)
       val blueprint = Blueprint(NiUri("af1ac4c41e", "git@github"))
-      val probe = createTestProbe[Procurement.Reply]()
+      val probe = createTestProbe[Reply]()
       procurement ! Procurement.SomeOperation(blueprint, probe.ref, "download")
-      probe.expectMessageType[Procurement.OpFailed](20 seconds)
+      probe.expectMessageType[OpFailed](20 seconds)
     }
 
     "react in the correct sequence of events when download is issued" in {
@@ -81,12 +80,12 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
 
       val blueprint = Blueprint(NiUri("cc4c41e", "e1ea1e"))
 
-      val probe = createTestProbe[Bike.Command]()
+      val probe = createTestProbe[Command]()
       val mockedBike = spawn(Behaviors.monitor(probe.ref, Bike(blueprint.makeEntityId(), procurement, tree, clusterShard, numShards)))
 
       mockedBike ! DownloadCmd(blueprint)
-      probe.expectMessageType[Bike.DownloadCmd](10 seconds)
-      //      val msg = probe.expectMessageType[Bike.AdaptedReply](10 seconds)
+      probe.expectMessageType[DownloadCmd](10 seconds)
+      //      val msg = probe.expectMessageType[AdaptedReply](10 seconds)
       //      msg.response shouldBe OpCompleted(blueprint)
     }
   }

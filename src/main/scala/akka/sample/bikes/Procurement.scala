@@ -3,7 +3,6 @@ package akka.sample.bikes
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
 import akka.{ actor => classic }
-import akka.sample.bikes.Bike.Blueprint
 
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }
@@ -27,9 +26,6 @@ object Procurement {
   case class SetMaxFailures(failCount: Int) extends AdminOperation
   case class SetMode(isRandom: Boolean) extends AdminOperation
   case class SetSpeed(processingTime: Long) extends AdminOperation
-  sealed trait Reply
-  case class OpCompleted(blueprint: Blueprint) extends Reply
-  case class OpFailed(blueprint: Blueprint, reason: String) extends Reply
 
   val random = new Random()
   /** Sets the number of times the external service will fail consecutively before responding. Useful for simulating retries. */
