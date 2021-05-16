@@ -46,7 +46,7 @@ object Bike {
   final case object ReserveCmd extends Command
   final case object YieldCmd extends Command
   final case object KickCmd extends Command
-  final case class GetStateCmd(bikeId: String, replyTo: ActorRef[BikeRoutes.QueryStatus]) extends Command
+  final case class GetStateCmd(bikeId: String, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]) extends Command
   final case object Timeout extends Command
   /**
    * The purpose of a wrapping class like this is to avoid circular dependencies between sender and receiver actors.
@@ -248,8 +248,8 @@ object Bike {
         }
     }
 
-    def getState(id: String, state: State, replyTo: ActorRef[BikeRoutes.QueryStatus]): Effect[Event, State] = {
-      replyTo ! BikeRoutes.QueryStatus(id, state)
+    def getState(id: String, state: State, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]): Effect[Event, State] = {
+      replyTo ! BikeRoutesSupport.QueryStatus(id, state)
       Effect.none
     }
 

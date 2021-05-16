@@ -2,7 +2,7 @@ package akka.sample.bikes.tree
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorRef, Behavior }
-import akka.sample.bikes.{ BikeRoutes, tree }
+import akka.sample.bikes.{ BikeRoutesSupport, tree }
 
 object GlobalTreeActor {
 
@@ -11,7 +11,7 @@ object GlobalTreeActor {
   final case class AddEntity(path: NodePath, state: String = "") extends TreeCommand
   final case class RemoveMember(memberId: String) extends TreeCommand
   final case class RemoveEntity(path: NodePath) extends TreeCommand
-  final case class GetInventory(replyTo: ActorRef[BikeRoutes.Inventory]) extends TreeCommand
+  final case class GetInventory(replyTo: ActorRef[BikeRoutesSupport.Inventory]) extends TreeCommand
   final case class GetJson(replyTo: ActorRef[String]) extends TreeCommand
   case object Bye extends TreeCommand
 
@@ -30,7 +30,7 @@ object GlobalTreeActor {
           updated(tree.removeEntity(root, path))
         case GetInventory(replyTo) =>
           val ids = tree.countLeaves(root)
-          replyTo ! BikeRoutes.Inventory(ids)
+          replyTo ! BikeRoutesSupport.Inventory(ids)
           Behaviors.same
         case GetJson(replyTo) =>
           replyTo ! root.toJson.compactPrint

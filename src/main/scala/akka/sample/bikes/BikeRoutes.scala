@@ -12,14 +12,6 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
-object BikeRoutes extends SprayJsonSupport {
-  sealed trait Status
-  final case class BikeRemoved(bikeId: String) extends Status
-  final case class Inventory(entities: List[Repr]) extends Status
-  final case class QueryStatus(bikeId: String, state: Bike.State) extends Status
-  private final case class WrappedResponse(response: Bike.State) extends Status
-}
-
 /**
  * HTTP API for
  * 1. Receiving data from remote work bikeIds
@@ -47,7 +39,7 @@ private[bikes] final class BikeRoutes(
           pathEnd {
             concat(
               get {
-                val f: Future[BikeRoutes.Inventory] = globalTreeRef.ask(replyTo => GlobalTreeActor.GetInventory(replyTo))
+                val f: Future[BikeRoutesSupport.Inventory] = globalTreeRef.ask(replyTo => GlobalTreeActor.GetInventory(replyTo))
                 onSuccess(f) { performed =>
                   complete(StatusCodes.OK -> performed)
                 }
@@ -62,7 +54,7 @@ private[bikes] final class BikeRoutes(
           path(Segment) { bikeId =>
             concat(
               get {
-                val f: Future[BikeRoutes.QueryStatus] = guardian.ask(replyTo => FleetsMaster.GetBike(bikeId, replyTo))
+                val f: Future[BikeRoutesSupport.QueryStatus] = guardian.ask(replyTo => FleetsMaster.GetBike(bikeId, replyTo))
                 onSuccess(f) { performed =>
                   complete(StatusCodes.OK -> performed)
                 }

@@ -1,5 +1,6 @@
 package akka.sample
 
+import akka.sample.bikes.tree.Repr
 import spray.json.{ DeserializationException, JsObject, JsString, JsValue, JsonFormat, RootJsonFormat }
 import spray.json._
 
@@ -33,7 +34,7 @@ package object bikes {
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
   import Bike.{ Blueprint, NiUri }
-  import akka.sample.bikes.BikeRoutes.Inventory
+  import akka.sample.bikes.BikeRoutesSupport.Inventory
   import spray.json.DefaultJsonProtocol
 
   object JsonSupport extends SprayJsonSupport {
@@ -91,11 +92,17 @@ package object bikes {
 
     }
 
-    implicit object QueryStatusFormat extends RootJsonWriter[BikeRoutes.QueryStatus] {
-      def write(c: BikeRoutes.QueryStatus) = JsObject(
+    implicit object QueryStatusFormat extends RootJsonWriter[BikeRoutesSupport.QueryStatus] {
+      def write(c: BikeRoutesSupport.QueryStatus) = JsObject(
         "bikeId" -> JsString(c.bikeId),
         "state" -> c.state.toJson)
     }
 
+  }
+
+  object BikeRoutesSupport extends SprayJsonSupport {
+    sealed trait Status
+    final case class Inventory(entities: List[Repr]) extends Status
+    final case class QueryStatus(bikeId: String, state: Bike.State) extends Status
   }
 }

@@ -20,7 +20,7 @@ private[bikes] object FleetsMaster {
   final case class KickBike(bikeId: BikeId) extends Command
   final case class ReserveBike(bikeId: BikeId) extends Command
   final case class YieldBike(bikeId: BikeId) extends Command
-  final case class GetBike(bikeId: BikeId, replyTo: ActorRef[BikeRoutes.QueryStatus]) extends Command
+  final case class GetBike(bikeId: BikeId, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]) extends Command
   final case class StopBike(bikeId: BikeId) extends Command
 
   def apply(actorTreeRef: ActorRef[GlobalTreeActor.TreeCommand]): Behavior[FleetsMaster.Command] =
