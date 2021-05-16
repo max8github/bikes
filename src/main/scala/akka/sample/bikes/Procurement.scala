@@ -3,7 +3,6 @@ package akka.sample.bikes
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
 import akka.{ actor => classic }
-import akka.sample.bikes.Bike.Blueprint
 
 import scala.concurrent.duration._
 import scala.concurrent.{ ExecutionContext, Future }

@@ -97,21 +97,9 @@ object Bike {
 
   private case object TimerKey
 
-  /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
-  final case class NiUri(version: String, location: String)
-  type Token = String
-
   private implicit def convertState(state: State) = {
     val st = state.getClass.getSimpleName
     if (st.endsWith("$")) st.replace("$", "") else st
-  }
-  def displayOfId(bikeId: String): String = {
-    val index = bikeId.lastIndexOf("-")
-    bikeId.substring(0, if (index != -1) index else bikeId.length)
-  }
-  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""), access: Token = "") {
-    def displayId: String = displayOfId(instructions.version)
-    def makeEntityId(): String = instructions.toJson.convertTo[NiUri].version
   }
 
   /**

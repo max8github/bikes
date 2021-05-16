@@ -33,7 +33,6 @@ package object bikes {
   trait CborSerializable
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-  import Bike.{ Blueprint, NiUri }
   import akka.sample.bikes.BikeRoutesSupport.Inventory
   import spray.json.DefaultJsonProtocol
 
@@ -104,5 +103,19 @@ package object bikes {
     sealed trait Status
     final case class Inventory(entities: List[Repr]) extends Status
     final case class QueryStatus(bikeId: String, state: Bike.State) extends Status
+  }
+
+  /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
+  final case class NiUri(version: String, location: String)
+  type Token = String
+
+  def displayOfId(bikeId: String): String = {
+    val index = bikeId.lastIndexOf("-")
+    bikeId.substring(0, if (index != -1) index else bikeId.length)
+  }
+  import JsonSupport._
+  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""), access: Token = "") {
+    def displayId: String = displayOfId(instructions.version)
+    def makeEntityId(): String = instructions.toJson.convertTo[NiUri].version
   }
 }

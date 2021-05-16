@@ -45,7 +45,7 @@ private[bikes] final class BikeRoutes(
                 }
               },
               post {
-                entity(as[Bike.Blueprint]) { blueprint =>
+                entity(as[Blueprint]) { blueprint =>
                   guardian ! FleetsMaster.WorkBike(blueprint)
                   complete(StatusCodes.Accepted -> s"${blueprint.makeEntityId()}")
                 }
@@ -86,7 +86,7 @@ private[bikes] final class BikeRoutes(
       pathPrefix("bikeid") {
         pathEnd {
           get {
-            entity(as[Bike.Blueprint]) { blueprint =>
+            entity(as[Blueprint]) { blueprint =>
               complete(StatusCodes.OK -> s"${blueprint.makeEntityId()}")
             }
           }

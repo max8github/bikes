@@ -16,7 +16,7 @@ private[bikes] object FleetsMaster {
   /**
    * Data received by the cluster from externally.
    */
-  final case class WorkBike(blueprint: Bike.Blueprint) extends Command
+  final case class WorkBike(blueprint: Blueprint) extends Command
   final case class KickBike(bikeId: BikeId) extends Command
   final case class ReserveBike(bikeId: BikeId) extends Command
   final case class YieldBike(bikeId: BikeId) extends Command
@@ -52,17 +52,17 @@ private[bikes] final class FleetsMaster(
           Behaviors.same
 
         case FleetsMaster.ReserveBike(bikeId) =>
-          context.log.debug("FleetsMaster received a request for reserving bike {}", Bike.displayOfId(bikeId))
+          context.log.debug("FleetsMaster received a request for reserving bike {}", displayOfId(bikeId))
           shardingRegion ! ShardingEnvelope(bikeId, Bike.ReserveCmd)
           Behaviors.same
 
         case FleetsMaster.YieldBike(bikeId) =>
-          context.log.debug("FleetsMaster received a request for yielding bike {}", Bike.displayOfId(bikeId))
+          context.log.debug("FleetsMaster received a request for yielding bike {}", displayOfId(bikeId))
           shardingRegion ! ShardingEnvelope(bikeId, Bike.YieldCmd)
           Behaviors.same
 
         case FleetsMaster.KickBike(bikeId) =>
-          context.log.debug("FleetsMaster received a PUT Kick request for bike {}", Bike.displayOfId(bikeId))
+          context.log.debug("FleetsMaster received a PUT Kick request for bike {}", displayOfId(bikeId))
           shardingRegion ! ShardingEnvelope(bikeId, Bike.KickCmd)
           Behaviors.same
 
