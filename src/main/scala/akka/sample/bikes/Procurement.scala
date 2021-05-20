@@ -18,6 +18,8 @@ object Procurement {
   sealed trait Operation
   trait AdminOperation extends Operation
   trait UserOperation extends Operation {
+    val blueprint: Blueprint
+    val fsm: ActorRef[Reply]
     val name: String
   }
   case class SomeOperation(blueprint: Blueprint, fsm: ActorRef[Reply], name: String) extends UserOperation
@@ -89,9 +91,10 @@ object Procurement {
         }
 
         Behaviors.receiveMessage[Operation] {
-          case SomeOperation(blueprint, replyTo, name) =>
+          case sop: UserOperation =>
             implicit val ex = context.executionContext
             implicit val sc = context.system.scheduler
+            val (blueprint, replyTo, name) = (sop.blueprint, sop.fsm, sop.name)
             // todo: use SupervisorStrategy.restart.withLimit(maxNrOfRetries = 2, withinTimeRange) instead (see akka.actor.typed.SupervisionSpec for an example)
             val f: (String, Blueprint) => Future[Blueprint] = (name, blueprint) => if (isRandom) callExternalService(name, blueprint) else callExternalServiceWithHickups(name, blueprint)
             akka.pattern.retry(() => f(name, blueprint), ATTEMPTS, 100 milliseconds)
@@ -101,12 +104,14 @@ object Procurement {
                 case Failure(failure) => replyTo ! OpFailed(blueprint, s"ERROR from External Service on $name, ${failure.getClass.getSimpleName}, ${failure.getMessage}, blueprint: ${blueprint.displayId}")
               }
             Behaviors.same
-          case SetMaxFailures(mf) =>
-            active(mf, processingTime, isRandom)
-          case SetSpeed(procTime) =>
-            active(maxFailures, procTime, isRandom)
-          case SetMode(isRand) =>
-            active(maxFailures, processingTime, isRand)
+          case adm: AdminOperation => adm match {
+            case SetMaxFailures(mf) =>
+              active(mf, processingTime, isRandom)
+            case SetSpeed(procTime) =>
+              active(maxFailures, procTime, isRandom)
+            case SetMode(isRand) =>
+              active(maxFailures, processingTime, isRand)
+          }
         }
       }
 

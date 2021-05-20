@@ -7,7 +7,7 @@ import akka.actor.typed._
 import akka.actor.typed.scaladsl.{ ActorContext, Behaviors, LoggerOps }
 import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, EntityTypeKey }
 import akka.cluster.typed.Cluster
-import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior }
+import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, Recovery }
 import akka.persistence.typed.{ PersistenceId, RecoveryCompleted, SnapshotSelectionCriteria }
 import JsonSupport._
 import Procurement._
@@ -169,7 +169,7 @@ object Bike {
                 val path = fullPath(bikeId, context.system)
                 globalTreeRef ! GlobalTreeActor.RemoveEntity(path)
                 Behaviors.same
-            }.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.none)
+            }.withRecovery(Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.none))
 
         // This is a timeout for entities that have been idle for while (no GET requests). It is different from the
         // fsm-timeout, which is used to time out a FSM entity for not reaching its end state in a reasonable time.

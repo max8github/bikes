@@ -25,7 +25,7 @@ private[bikes] final class BikeService(routes: Route, host: String, port: Int,
   import system.executionContext
 
   def start(): Unit = {
-    Http().bindAndHandle(routes, host, port).onComplete {
+    Http().newServerAt(host, port).bindFlow(routes).onComplete {
       case Success(binding) =>
         val address = binding.localAddress
         system.log.info("BikeService online at http://{}:{}/", address.getHostString, address.getPort)

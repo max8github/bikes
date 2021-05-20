@@ -11,9 +11,7 @@ package object tree {
   case class Node(name: String, `type`: String, var nodeState: String = "", var children: Set[Node] = Set.empty) {
     override def equals(other: Any): Boolean = other match {
       case that: Node =>
-        (that canEqual this) &&
-          name == that.name &&
-          `type` == that.`type`
+        (that canEqual this) && name == that.name && `type` == that.`type`
       case _ => false
     }
 

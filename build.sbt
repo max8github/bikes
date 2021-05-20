@@ -1,6 +1,6 @@
 import com.typesafe.sbt.packager.docker.DockerChmodType
 
-organization in ThisBuild := "me.rerun"
+ThisBuild /organization := "me.rerun"
 
 //resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -20,10 +20,8 @@ enablePlugins(GatlingPlugin)
 
 scalacOptions := Seq("-feature", "-unchecked", "-deprecation", "-encoding", "utf8")
 classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.AllLibraryJars
-run / fork := true
 Compile / run / fork := true
 
-run / mainClass := Some("akka.sample.bikes.Main")
 Compile / mainClass := Some("akka.sample.bikes.Main")
 
 enablePlugins(JavaServerAppPackaging)

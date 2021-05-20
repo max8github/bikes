@@ -37,7 +37,7 @@ object Main {
       implicit val classicSystem: classic.ActorSystem = context.system.toClassic
 
       //#start-akka-management
-      AkkaManagement.get(classicSystem).start
+      AkkaManagement.get(classicSystem).start()
       //#start-akka-management
       ClusterBootstrap.get(classicSystem).start()
       new BikeService(routes, httpHost, httpPort, context.system).start()

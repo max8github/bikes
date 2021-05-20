@@ -54,6 +54,12 @@ object ClusterListener {
             case MemberDowned(member) =>
               treeActor ! GlobalTreeActor.AddMember(member.address.toString, changeEvent.getClass.getSimpleName)
               ctx.log.info("Member {} downed", member.address)
+            case MemberPreparingForShutdown(member) =>
+              treeActor ! GlobalTreeActor.AddMember(member.address.toString, changeEvent.getClass.getSimpleName)
+              ctx.log.info("Member {} preparing for shutdown", member.address)
+            case MemberReadyForShutdown(member) =>
+              treeActor ! GlobalTreeActor.AddMember(member.address.toString, changeEvent.getClass.getSimpleName)
+              ctx.log.info("Member {} ready for shutdown", member.address)
           }
       }
       Behaviors.same

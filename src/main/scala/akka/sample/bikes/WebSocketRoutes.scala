@@ -12,7 +12,7 @@ import akka.pattern.ask
 import akka.sample.bikes.tree.GlobalTreeActor
 import akka.stream.scaladsl.GraphDSL.Implicits._
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source }
-import akka.stream.{ FlowShape, OverflowStrategy }
+import akka.stream.{ CompletionStrategy, FlowShape, OverflowStrategy }
 import akka.util.Timeout
 
 import scala.concurrent.Future
@@ -59,7 +59,15 @@ class ClientHandlerActor(treeActor: ActorRef[GlobalTreeActor.TreeCommand]) exten
 
   var treeString = """{"name":"cluster","type":"cluster"}"""
 
-  val (down, publisher) = Source.actorRef[String](1000, OverflowStrategy.fail)
+  val completion: PartialFunction[Any, CompletionStrategy] = {
+    case akka.actor.Status.Success(s: CompletionStrategy) => s
+    case akka.actor.Status.Success(_) => CompletionStrategy.Draining
+    case akka.actor.Status.Success => CompletionStrategy.Draining
+  }
+  val failure: PartialFunction[Any, Throwable] = {
+    case akka.actor.Status.Failure(cause) => cause
+  }
+  val (down, publisher) = Source.actorRef[String](completion, failure, 1000, OverflowStrategy.fail)
     .toMat(Sink.asPublisher(fanout = false))(Keep.both)
     .run()
 
@@ -81,7 +89,7 @@ class ClientHandlerActor(treeActor: ActorRef[GlobalTreeActor.TreeCommand]) exten
         textMsgFlow ~> Sink.foreach[String](self ! _)
         FlowShape(textMsgFlow.in, pubSrc.out)
       })
-      sender ! flow
+      sender() ! flow
 
     case s: String if s == "hi" =>
       treeActor ! GlobalTreeActor.GetJson(self)
