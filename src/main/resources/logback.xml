@@ -3,27 +3,18 @@
     <!-- This is a development logging configuration that logs to standard out, for an example of a production
         logging config, see the Akka docs: https://doc.akka.io/docs/akka/2.6/typed/logging.html#logback -->
     <appender name="STDOUT" target="System.out" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="akka.sample.bikes.log.NonBizFilter" />
         <encoder>
             <pattern>[%date{ISO8601}] [%level] [%logger] [%thread] [%X{akkaSource}] - %msg%n</pattern>
-        </encoder>
-    </appender>
-
-    <appender name="STDOUT2" target="System.out" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="akka.sample.bikes.log.BizDomainFilter" />
-        <encoder>
-            <pattern>[%date{ISO8601}] [%level] [%logger] [%thread] [%X{akkaSource}] %n%n %magenta(%msg%n%n)</pattern>
         </encoder>
     </appender>
 
     <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
         <queueSize>1024</queueSize>
         <neverBlock>true</neverBlock>
-        <appender-ref ref="STDOUT2" />
         <appender-ref ref="STDOUT" />
     </appender>
 
-<!--    <logger name="akka" level="OFF"/>-->
+    <!--    <logger name="akka" level="OFF"/>-->
 
     <root level="INFO">
         <appender-ref ref="ASYNC"/>
