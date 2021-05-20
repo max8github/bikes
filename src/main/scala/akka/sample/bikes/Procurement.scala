@@ -14,7 +14,7 @@ import scala.util.{ Failure, Random, Success }
  * External services are mimicked here by fake futures.
  */
 object Procurement {
-  sealed trait Operation
+  sealed trait Operation extends CborSerializable
   trait AdminOperation extends Operation
   trait UserOperation extends Operation {
     val blueprint: Blueprint

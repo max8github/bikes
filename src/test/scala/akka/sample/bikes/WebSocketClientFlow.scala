@@ -22,7 +22,7 @@ object WebSocketClientFlow {
           println(s"Now Received ${message.text}")
       }
 
-    final case class User(name: String, id: String)
+    final case class User(name: String, id: String) extends CborSerializable
 
     //    def dummyUser(id: String) = User(s"User$id", id.toString)
     //

@@ -8,7 +8,7 @@ package object tree {
 
   private val log = LoggerFactory.getLogger("bikes.tree")
 
-  case class Node(name: String, `type`: String, var nodeState: String = "", var children: Set[Node] = Set.empty) {
+  case class Node(name: String, `type`: String, var nodeState: String = "", var children: Set[Node] = Set.empty) extends CborSerializable {
     override def equals(other: Any): Boolean = other match {
       case that: Node =>
         (that canEqual this) && name == that.name && `type` == that.`type`
@@ -24,8 +24,8 @@ package object tree {
 
     def representation(): Repr = Repr(name, nodeState)
   }
-  case class Repr(id: String, state: String)
-  case class NodePath(memberId: String, shardId: String, entityId: String) {
+  case class Repr(id: String, state: String) extends CborSerializable
+  case class NodePath(memberId: String, shardId: String, entityId: String) extends CborSerializable {
     override def toString: String = s"$memberId/$shardId/$entityId"
   }
 

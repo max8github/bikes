@@ -21,7 +21,7 @@ import scala.util.{ Failure, Random, Success }
 
 object WebSocketRoutes {
 
-  case object GetWebsocketFlow
+  case object GetWebsocketFlow extends CborSerializable
 
   object ClientHandlerActor {
     def props(treeActor: ActorRef[GlobalTreeActor.TreeCommand]): Props = classic.Props(new ClientHandlerActor(treeActor))

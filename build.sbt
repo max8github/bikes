@@ -10,7 +10,7 @@ version := "0.3"
 
 scalaVersion := "2.13.5"
 lazy val akkaHttpVersion = "10.2.4"
-lazy val akkaVersion    = "2.6.14"
+lazy val akkaVersion    = "2.6.16"
 lazy val akkaCassandraVersion    = "1.0.5"
 lazy val scalatestVersion = "3.2.8"
 val gatlingBundleName = "gatling-charts-highcharts-bundle"
@@ -59,7 +59,8 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
 
-    //    "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.2",
+    "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
     "com.typesafe.akka" %% "akka-cluster-typed"         % akkaVersion,
     "com.typesafe.akka" %% "akka-multi-node-testkit"    % akkaVersion,
     "com.typesafe.akka" %% "akka-discovery" % akkaVersion,
