@@ -9,7 +9,7 @@ import akka.sample.bikes.tree.GlobalTreeActor
 
 object ClusterListener {
 
-  sealed trait Event
+  sealed trait Event extends CborSerializable
   // internal adapted cluster events only
   private final case class ReachabilityChange(reachabilityEvent: ReachabilityEvent) extends Event
   private final case class MemberChange(event: MemberEvent) extends Event

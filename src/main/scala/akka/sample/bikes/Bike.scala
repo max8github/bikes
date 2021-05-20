@@ -23,7 +23,7 @@ import scala.concurrent.duration.FiniteDuration
 object Bike {
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("Bike")
 
-  sealed trait Event
+  sealed trait Event extends CborSerializable
   final case class DownloadEvent(blueprint: Blueprint) extends Event
   final case class DownloadedEvt(blueprint: Blueprint) extends Event
   final case class CreateEvent(blueprint: Blueprint) extends Event
@@ -38,7 +38,7 @@ object Bike {
   /**
    * This interface defines all the commands that the persistent actor supports.
    */
-  sealed trait Command
+  sealed trait Command extends CborSerializable
   final case object Idle extends Command
   final case object GoodBye extends Command
   final case class DownloadCmd(blueprint: Blueprint) extends Command
@@ -81,7 +81,7 @@ object Bike {
    */
   private final case class AdaptedReply(response: Procurement.Reply) extends Command
 
-  sealed trait State
+  sealed trait State extends CborSerializable
   final case object InitState extends State
   final case class DownloadingState(blueprint: Blueprint) extends State
   final case class DownloadedState(blueprint: Blueprint) extends State
@@ -95,10 +95,10 @@ object Bike {
     override def toString: String = s"ErrorState('$msg', ${offendingCommand.getClass.getSimpleName}, ${lastState.getClass.getSimpleName})"
   }
 
-  private case object TimerKey
+  private case object TimerKey extends CborSerializable
 
   /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
-  final case class NiUri(version: String, location: String)
+  final case class NiUri(version: String, location: String) extends CborSerializable
   type Token = String
 
   private implicit def convertState(state: State) = {
@@ -109,7 +109,8 @@ object Bike {
     val index = bikeId.lastIndexOf("-")
     bikeId.substring(0, if (index != -1) index else bikeId.length)
   }
-  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""), access: Token = "") {
+  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""),
+    access: Token = "") extends CborSerializable {
     def displayId: String = displayOfId(instructions.version)
     def makeEntityId(): String = instructions.toJson.convertTo[NiUri].version
   }

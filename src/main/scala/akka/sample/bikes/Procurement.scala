@@ -15,7 +15,7 @@ import scala.util.{ Failure, Random, Success }
  * External services are mimicked here by fake futures.
  */
 object Procurement {
-  sealed trait Operation
+  sealed trait Operation extends CborSerializable
   trait AdminOperation extends Operation
   trait UserOperation extends Operation {
     val blueprint: Blueprint
@@ -27,7 +27,7 @@ object Procurement {
   case class SetMaxFailures(failCount: Int) extends AdminOperation
   case class SetMode(isRandom: Boolean) extends AdminOperation
   case class SetSpeed(processingTime: Long) extends AdminOperation
-  sealed trait Reply
+  sealed trait Reply extends CborSerializable
   case class OpCompleted(blueprint: Blueprint) extends Reply
   case class OpFailed(blueprint: Blueprint, reason: String) extends Reply
 

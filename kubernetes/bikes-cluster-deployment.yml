@@ -24,6 +24,7 @@ spec:
     spec:
       containers:
         - name: bikes-cluster-demo
+          # image version should match bikes version in build.sbt
           image: bikes:0.3
           imagePullPolicy: Never
           readinessProbe:

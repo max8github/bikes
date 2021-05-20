@@ -13,7 +13,7 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 
 object BikeRoutes extends SprayJsonSupport {
-  sealed trait Status
+  sealed trait Status extends CborSerializable
   final case class BikeRemoved(bikeId: String) extends Status
   final case class Inventory(entities: List[Repr]) extends Status
   final case class QueryStatus(bikeId: String, state: Bike.State) extends Status
