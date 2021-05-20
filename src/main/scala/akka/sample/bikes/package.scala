@@ -14,7 +14,7 @@ package object bikes {
   /**
    * This interface defines all the commands that the persistent actor supports.
    */
-  sealed trait Command
+  sealed trait Command extends CborSerializable
   final case object Idle extends Command
   final case object GoodBye extends Command
   final case class DownloadCmd(blueprint: Blueprint) extends Command
@@ -58,11 +58,11 @@ package object bikes {
    */
   final case class AdaptedReply(response: Reply) extends akka.sample.bikes.Command
 
-  sealed trait Reply
+  sealed trait Reply extends CborSerializable
   case class OpCompleted(blueprint: Blueprint) extends Reply
   case class OpFailed(blueprint: Blueprint, reason: String) extends Reply
 
-  sealed trait State
+  sealed trait State extends CborSerializable
   final case object InitState extends State
   final case class DownloadingState(blueprint: Blueprint) extends State
   final case class DownloadedState(blueprint: Blueprint) extends State
@@ -116,13 +116,6 @@ package object bikes {
     val bikeId = blueprint.makeEntityId()
     fullPath(bikeId, system)
   }
-
-  /**
-   * Marker trait for serialization with Jackson CBOR. Currently (Mar 2020) unused.
-   * Turn this back on and remove Java Serialization in `application.conf` once Cassandra is
-   * upgraded to support typed actors and the newest version of Akka.
-   */
-  trait CborSerializable
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
   import akka.sample.bikes.BikeRoutesSupport.Inventory
@@ -192,13 +185,13 @@ package object bikes {
   }
 
   object BikeRoutesSupport extends SprayJsonSupport {
-    sealed trait Status
+    sealed trait Status extends CborSerializable
     final case class Inventory(entities: List[Repr]) extends Status
     final case class QueryStatus(bikeId: String, state: State) extends Status
   }
 
   /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
-  final case class NiUri(version: String, location: String)
+  final case class NiUri(version: String, location: String) extends CborSerializable
   type Token = String
 
   def displayOfId(bikeId: String): String = {
@@ -206,7 +199,8 @@ package object bikes {
     bikeId.substring(0, if (index != -1) index else bikeId.length)
   }
   import JsonSupport._
-  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""), access: Token = "") {
+  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""),
+    access: Token = "") extends CborSerializable {
     def displayId: String = displayOfId(instructions.version)
     def makeEntityId(): String = instructions.toJson.convertTo[NiUri].version
   }

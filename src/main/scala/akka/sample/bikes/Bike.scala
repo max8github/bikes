@@ -21,7 +21,7 @@ import scala.concurrent.duration.FiniteDuration
 object Bike {
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("Bike")
 
-  private sealed trait Event
+  private sealed trait Event extends CborSerializable
   private final case class DownloadEvent(blueprint: Blueprint) extends Event
   private final case class DownloadedEvt(blueprint: Blueprint) extends Event
   private final case class CreateEvent(blueprint: Blueprint) extends Event
@@ -33,7 +33,7 @@ object Bike {
   private final case class KickEvent(previousState: State) extends Event
   private final case class ErrorEvent(errorMessage: String, previousState: State, causeCommand: Command) extends Event
 
-  private case object TimerKey
+  private case object TimerKey extends CborSerializable
 
   private implicit def convertState(state: State) = {
     val st = state.getClass.getSimpleName

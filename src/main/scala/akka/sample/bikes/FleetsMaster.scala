@@ -12,7 +12,7 @@ private[bikes] object FleetsMaster {
 
   type BikeId = String
 
-  sealed trait Command
+  sealed trait Command extends CborSerializable
   /**
    * Data received by the cluster from externally.
    */

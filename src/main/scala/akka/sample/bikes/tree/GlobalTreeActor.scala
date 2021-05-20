@@ -2,11 +2,11 @@ package akka.sample.bikes.tree
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorRef, Behavior }
-import akka.sample.bikes.{ BikeRoutesSupport, tree }
+import akka.sample.bikes.{ BikeRoutesSupport, CborSerializable, tree }
 
 object GlobalTreeActor {
 
-  trait TreeCommand
+  trait TreeCommand extends CborSerializable
   final case class AddMember(memberId: String, event: String) extends TreeCommand
   final case class AddEntity(path: NodePath, state: String = "") extends TreeCommand
   final case class RemoveMember(memberId: String) extends TreeCommand
