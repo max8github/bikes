@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: bikes-cluster-demo
-          image: bikes:0.2.1
+          image: bikes:0.3
           imagePullPolicy: Never
           readinessProbe:
             httpGet:
