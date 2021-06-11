@@ -1,6 +1,10 @@
 package akka.sample
 
-import spray.json.{ DeserializationException, JsObject, JsString, JsValue, JsonFormat, RootJsonFormat }
+import akka.actor.typed.ActorSystem
+import akka.cluster.typed.Cluster
+import akka.sample.bikes.Bike.Blueprint
+import akka.sample.bikes.tree.NodePath
+import spray.json.{ JsObject, JsString, JsValue }
 import spray.json._
 
 package object bikes {
@@ -25,14 +29,40 @@ package object bikes {
   }
 
   /**
+   * Finds (memberId, shardId, bikeId) given bikeId and ActorSystem.
+   * Shard id is easily found from the entity id by using the sharding function.
+   * Member id is known from the system.
+   *
+   * The tree model in GlobalTreeActor is not the real model (the cluster), but a copy
+   * of it. It would be great to give d3.js the correct model from jmx or something else, but from the cluster itself,
+   * without having to create a Tree copy structure.
+   *
+   * @param bikeId entity id for the bike
+   * @param system actor system
+   * @return
+   */
+  def fullPath(bikeId: String, system: ActorSystem[_])(implicit numOfShards: Int): NodePath = {
+    val shardId = BikeMessageExtractor.consHash(bikeId, numOfShards)
+    val memberId = Cluster.get(system).selfMember.address.toString
+    NodePath(memberId, shardId, bikeId)
+  }
+  def fullPath(blueprint: Blueprint, system: ActorSystem[_])(implicit numOfShards: Int): NodePath = {
+    val bikeId = blueprint.makeEntityId()
+    fullPath(bikeId, system)
+  }
+
+  /**
    * Marker trait for serialization with Jackson CBOR. Currently (Mar 2020) unused.
    * Turn this back on and remove Java Serialization in `application.conf` once Cassandra is
    * upgraded to support typed actors and the newest version of Akka.
    */
   trait CborSerializable
 
+  /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
+  final case class NiUri(version: String, location: String)
+
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-  import Bike.{ Blueprint, NiUri }
+  import Bike.Blueprint
   import akka.sample.bikes.BikeRoutes.Inventory
   import spray.json.DefaultJsonProtocol
 

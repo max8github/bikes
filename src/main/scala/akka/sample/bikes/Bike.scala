@@ -96,9 +96,6 @@ object Bike {
   }
 
   private case object TimerKey
-
-  /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
-  final case class NiUri(version: String, location: String)
   type Token = String
 
   private implicit def convertState(state: State) = {
@@ -112,29 +109,6 @@ object Bike {
   final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""), access: Token = "") {
     def displayId: String = displayOfId(instructions.version)
     def makeEntityId(): String = instructions.toJson.convertTo[NiUri].version
-  }
-
-  /**
-   * Finds (memberId, shardId, bikeId) given bikeId and ActorSystem.
-   * Shard id is easily found from the entity id by using the sharding function.
-   * Member id is known from the system.
-   *
-   * The tree model in GlobalTreeActor is not the real model (the cluster), but a copy
-   * of it. It would be great to give d3.js the correct model from jmx or something else, but from the cluster itself,
-   * without having to create a Tree copy structure.
-   *
-   * @param bikeId entity id for the bike
-   * @param system actor system
-   * @return
-   */
-  private def fullPath(bikeId: String, system: ActorSystem[_])(implicit numOfShards: Int): NodePath = {
-    val shardId = BikeMessageExtractor.consHash(bikeId, numOfShards)
-    val memberId = Cluster.get(system).selfMember.address.toString
-    NodePath(memberId, shardId, bikeId)
-  }
-  private def fullPath(blueprint: Blueprint, system: ActorSystem[_])(implicit numOfShards: Int): NodePath = {
-    val bikeId = blueprint.makeEntityId()
-    fullPath(bikeId, system)
   }
 
   def apply(bikeId: String, ops: ActorRef[Operation], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand],
