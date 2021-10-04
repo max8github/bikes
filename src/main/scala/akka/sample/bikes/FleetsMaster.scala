@@ -16,11 +16,11 @@ private[bikes] object FleetsMaster {
   /**
    * Data received by the cluster from externally.
    */
-  final case class WorkBike(blueprint: Bike.Blueprint) extends Command
+  final case class WorkBike(blueprint: Blueprint) extends Command
   final case class KickBike(bikeId: BikeId) extends Command
   final case class ReserveBike(bikeId: BikeId) extends Command
   final case class YieldBike(bikeId: BikeId) extends Command
-  final case class GetBike(bikeId: BikeId, replyTo: ActorRef[BikeRoutes.QueryStatus]) extends Command
+  final case class GetBike(bikeId: BikeId, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]) extends Command
   final case class StopBike(bikeId: BikeId) extends Command
 
   def apply(actorTreeRef: ActorRef[GlobalTreeActor.TreeCommand]): Behavior[FleetsMaster.Command] =
@@ -32,7 +32,7 @@ private[bikes] object FleetsMaster {
       def init(system: ActorSystem[_], ops: ActorRef[Operation], actorTreeRef: ActorRef[GlobalTreeActor.TreeCommand]) =
         ClusterSharding(system).init(Entity(Bike.typeKey) { entityContext =>
           Bike(entityContext.entityId, ops, actorTreeRef, entityContext.shard, numShards)
-        }.withStopMessage(Bike.GoodBye).withMessageExtractor(messageExtractor))
+        }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
       val ops = context.spawn(Procurement(context.system), "procurement")
       val shardingRegion = init(context.system, ops, actorTreeRef)
       new FleetsMaster(shardingRegion, actorTreeRef).active()
@@ -40,7 +40,7 @@ private[bikes] object FleetsMaster {
 }
 
 private[bikes] final class FleetsMaster(
-  shardingRegion: ActorRef[ShardingEnvelope[Bike.Command]],
+  shardingRegion: ActorRef[ShardingEnvelope[Command]],
   actorTreeRef: ActorRef[GlobalTreeActor.TreeCommand]) {
 
   def active(): Behavior[FleetsMaster.Command] = {
@@ -48,32 +48,32 @@ private[bikes] final class FleetsMaster(
       Behaviors.receiveMessage {
         case FleetsMaster.WorkBike(blueprint) =>
           context.log.debug("FleetsMaster received a POST Create Bike request for bike {}", blueprint.displayId)
-          shardingRegion ! ShardingEnvelope(blueprint.makeEntityId(), Bike.DownloadCmd(blueprint))
+          shardingRegion ! ShardingEnvelope(blueprint.makeEntityId(), DownloadCmd(blueprint))
           Behaviors.same
 
         case FleetsMaster.ReserveBike(bikeId) =>
-          context.log.debug("FleetsMaster received a request for reserving bike {}", Bike.displayOfId(bikeId))
-          shardingRegion ! ShardingEnvelope(bikeId, Bike.ReserveCmd)
+          context.log.debug("FleetsMaster received a request for reserving bike {}", displayOfId(bikeId))
+          shardingRegion ! ShardingEnvelope(bikeId, ReserveCmd)
           Behaviors.same
 
         case FleetsMaster.YieldBike(bikeId) =>
-          context.log.debug("FleetsMaster received a request for yielding bike {}", Bike.displayOfId(bikeId))
-          shardingRegion ! ShardingEnvelope(bikeId, Bike.YieldCmd)
+          context.log.debug("FleetsMaster received a request for yielding bike {}", displayOfId(bikeId))
+          shardingRegion ! ShardingEnvelope(bikeId, YieldCmd)
           Behaviors.same
 
         case FleetsMaster.KickBike(bikeId) =>
-          context.log.debug("FleetsMaster received a PUT Kick request for bike {}", Bike.displayOfId(bikeId))
-          shardingRegion ! ShardingEnvelope(bikeId, Bike.KickCmd)
+          context.log.debug("FleetsMaster received a PUT Kick request for bike {}", displayOfId(bikeId))
+          shardingRegion ! ShardingEnvelope(bikeId, KickCmd)
           Behaviors.same
 
         case FleetsMaster.GetBike(bikeId, replyTo) =>
           context.log.debug("FleetsMaster received a GET request for bike {}", bikeId)
-          shardingRegion ! ShardingEnvelope(bikeId, Bike.GetStateCmd(bikeId, replyTo))
+          shardingRegion ! ShardingEnvelope(bikeId, GetStateCmd(bikeId, replyTo))
           Behaviors.same
 
         case FleetsMaster.StopBike(bikeId) =>
           context.log.debug("FleetsMaster received a STOP request for bike {}", bikeId)
-          shardingRegion ! ShardingEnvelope(bikeId, Bike.Idle)
+          shardingRegion ! ShardingEnvelope(bikeId, Idle)
           Behaviors.same
 
         case _ => Behaviors.unhandled

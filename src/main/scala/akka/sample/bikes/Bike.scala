@@ -9,10 +9,8 @@ import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, EntityTypeKey }
 import akka.cluster.typed.Cluster
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, Recovery }
 import akka.persistence.typed.{ PersistenceId, RecoveryCompleted, SnapshotSelectionCriteria }
-import JsonSupport._
 import Procurement._
 import akka.sample.bikes.tree.{ GlobalTreeActor, NodePath }
-import spray.json._
 import scala.language.implicitConversions
 
 import scala.concurrent.duration.FiniteDuration
@@ -23,118 +21,23 @@ import scala.concurrent.duration.FiniteDuration
 object Bike {
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("Bike")
 
-  sealed trait Event
-  final case class DownloadEvent(blueprint: Blueprint) extends Event
-  final case class DownloadedEvt(blueprint: Blueprint) extends Event
-  final case class CreateEvent(blueprint: Blueprint) extends Event
-  final case class CreatedEvt(blueprint: Blueprint, location: NiUri) extends Event
-  final case class ReserveEvent(blueprint: Blueprint) extends Event
-  final case class ReservedEvt(blueprint: Blueprint) extends Event
-  final case class YieldEvent(blueprint: Blueprint) extends Event
-  final case class YieldedEvt(blueprint: Blueprint) extends Event
-  final case class KickEvent(previousState: State) extends Event
-  final case class ErrorEvent(errorMessage: String, previousState: State, causeCommand: Command) extends Event
-
-  /**
-   * This interface defines all the commands that the persistent actor supports.
-   */
-  sealed trait Command
-  final case object Idle extends Command
-  final case object GoodBye extends Command
-  final case class DownloadCmd(blueprint: Blueprint) extends Command
-  final case class CreateCmd(blueprint: Blueprint) extends Command
-  final case object ReserveCmd extends Command
-  final case object YieldCmd extends Command
-  final case object KickCmd extends Command
-  final case class GetStateCmd(bikeId: String, replyTo: ActorRef[BikeRoutes.QueryStatus]) extends Command
-  final case object Timeout extends Command
-  /**
-   * The purpose of a wrapping class like this is to avoid circular dependencies between sender and receiver actors.
-   * Here, `Bike` depends on an external service, `Procurement`, because it needs to send messages to `Procurement`:
-   * ```
-   * bike ! Procurement.SomeOperation
-   * ```
-   * `Procurement` needs to respond to those messages:
-   * ```
-   * bike ! Bike.Response
-   * ```
-   * causing `Procurement` to depend on `Bike`.
-   *
-   * Instead of depending on `Bike` that way, we can use an adapter and have `Procurement` do: `actorRef ! Procurement.Reply`,
-   * where actorRef is meant to be a bike.
-   *
-   * Here is how it goes: the bike sends a message to `Procurement`:
-   * ```
-   * procurement ! Procurement.SomeOperation(cmd.blueprint, replyToMapper, "download()")
-   * ```
-   * where `replyToMapper` is this:
-   * ```
-   * val replyToMapper: ActorRef[Reply] = context.messageAdapter(reply => AdaptedReply(reply))
-   * ```
-   * All `Procurement` knows is that it replies to an `ActorRef[Reply]`, where `Reply` is defined by `Procurement`.
-   * In reality, `Procurement` sends a message to an adapter, `replyMapper`, which will take a `Reply` and transform it into a
-   * `AdaptedReply`, which is something understood by `Bike`. So, in the end, all of this happens as if `Procurement`
-   * sent a `AdaptedReply` message to `Bike`, as if it were: `procurement ! Bike.AdaptedReply`.
-   * There is just an adapter in the middle.
-   *
-   * @param response response from external service
-   */
-  private final case class AdaptedReply(response: Procurement.Reply) extends Command
-
-  sealed trait State
-  final case object InitState extends State
-  final case class DownloadingState(blueprint: Blueprint) extends State
-  final case class DownloadedState(blueprint: Blueprint) extends State
-  final case class CreatingState(blueprint: Blueprint) extends State
-  final case class CreatedState(blueprint: Blueprint, location: NiUri = NiUri("e7701e-1ea1e", "https://www.bikes.com/location}")) extends State
-  final case class ReservingState(blueprint: Blueprint, location: NiUri) extends State
-  final case class ReservedState(blueprint: Blueprint, location: NiUri) extends State
-  final case class YieldingState(blueprint: Blueprint, location: NiUri) extends State
-  final case class YieldedState(blueprint: Blueprint, location: NiUri) extends State
-  final case class ErrorState(msg: String, offendingCommand: Command, lastState: State) extends State {
-    override def toString: String = s"ErrorState('$msg', ${offendingCommand.getClass.getSimpleName}, ${lastState.getClass.getSimpleName})"
-  }
+  private sealed trait Event
+  private final case class DownloadEvent(blueprint: Blueprint) extends Event
+  private final case class DownloadedEvt(blueprint: Blueprint) extends Event
+  private final case class CreateEvent(blueprint: Blueprint) extends Event
+  private final case class CreatedEvt(blueprint: Blueprint, location: NiUri) extends Event
+  private final case class ReserveEvent(blueprint: Blueprint) extends Event
+  private final case class ReservedEvt(blueprint: Blueprint) extends Event
+  private final case class YieldEvent(blueprint: Blueprint) extends Event
+  private final case class YieldedEvt(blueprint: Blueprint) extends Event
+  private final case class KickEvent(previousState: State) extends Event
+  private final case class ErrorEvent(errorMessage: String, previousState: State, causeCommand: Command) extends Event
 
   private case object TimerKey
-
-  /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */
-  final case class NiUri(version: String, location: String)
-  type Token = String
 
   private implicit def convertState(state: State) = {
     val st = state.getClass.getSimpleName
     if (st.endsWith("$")) st.replace("$", "") else st
-  }
-  def displayOfId(bikeId: String): String = {
-    val index = bikeId.lastIndexOf("-")
-    bikeId.substring(0, if (index != -1) index else bikeId.length)
-  }
-  final case class Blueprint(instructions: NiUri, bom: NiUri = NiUri("", ""), mechanic: NiUri = NiUri("", ""), access: Token = "") {
-    def displayId: String = displayOfId(instructions.version)
-    def makeEntityId(): String = instructions.toJson.convertTo[NiUri].version
-  }
-
-  /**
-   * Finds (memberId, shardId, bikeId) given bikeId and ActorSystem.
-   * Shard id is easily found from the entity id by using the sharding function.
-   * Member id is known from the system.
-   *
-   * The tree model in GlobalTreeActor is not the real model (the cluster), but a copy
-   * of it. It would be great to give d3.js the correct model from jmx or something else, but from the cluster itself,
-   * without having to create a Tree copy structure.
-   *
-   * @param bikeId entity id for the bike
-   * @param system actor system
-   * @return
-   */
-  private def fullPath(bikeId: String, system: ActorSystem[_])(implicit numOfShards: Int): NodePath = {
-    val shardId = BikeMessageExtractor.consHash(bikeId, numOfShards)
-    val memberId = Cluster.get(system).selfMember.address.toString
-    NodePath(memberId, shardId, bikeId)
-  }
-  private def fullPath(blueprint: Blueprint, system: ActorSystem[_])(implicit numOfShards: Int): NodePath = {
-    val bikeId = blueprint.makeEntityId()
-    fullPath(bikeId, system)
   }
 
   def apply(bikeId: String, ops: ActorRef[Operation], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand],
@@ -248,8 +151,8 @@ object Bike {
         }
     }
 
-    def getState(id: String, state: State, replyTo: ActorRef[BikeRoutes.QueryStatus]): Effect[Event, State] = {
-      replyTo ! BikeRoutes.QueryStatus(id, state)
+    def getState(id: String, state: State, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]): Effect[Event, State] = {
+      replyTo ! BikeRoutesSupport.QueryStatus(id, state)
       Effect.none
     }
 
