@@ -1,13 +1,19 @@
 package akka.sample.bikes
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ ActorRef, ActorSystem, SupervisorStrategy }
+import akka.actor.typed.{ ActorSystem, SupervisorStrategy }
 import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity }
 import akka.cluster.typed.{ ClusterSingleton, SingletonActor }
 import akka.http.scaladsl.server.Directives._
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
-import akka.sample.bikes.Procurement.Operation
+import akka.persistence.cassandra.query.scaladsl.CassandraReadJournal
+import akka.persistence.query.Offset
+import akka.projection.{ ProjectionBehavior, ProjectionId }
+import akka.projection.cassandra.scaladsl.CassandraProjection
+import akka.projection.eventsourced.EventEnvelope
+import akka.projection.eventsourced.scaladsl.EventSourcedProvider
+import akka.projection.scaladsl.SourceProvider
 import akka.sample.bikes.tree.GlobalTreeActor
 import akka.{ actor => classic }
 import com.typesafe.config.ConfigFactory
@@ -33,7 +39,7 @@ object Main {
 
       val procurement = context.spawn(Procurement(context.system), "procurement")
       val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
-        Bike(entityContext.entityId, procurement, globalTreeRef, entityContext.shard, numShards)
+        Bike(entityContext.entityId, BikeTags.Single, procurement, globalTreeRef, entityContext.shard, numShards)
       }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
 
       val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
@@ -91,7 +97,7 @@ object Main {
 
         val procurement = context.spawn(Procurement(context.system), "procurement")
         val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
-          Bike(entityContext.entityId, procurement, globalTreeRef, entityContext.shard, numShards)
+          Bike(entityContext.entityId, BikeTags.Single, procurement, globalTreeRef, entityContext.shard, numShards)
         }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
 
         val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
@@ -105,6 +111,20 @@ object Main {
         implicit val classicSystem: classic.ActorSystem = context.system.toClassic
         val host = config.getString("bikes.httpHost")
         new BikeService(routes, host, httpPort, context.system).start()
+
+        //Projection Setup (createProjectionFor)
+        val system = context.system
+        implicit val ec = system.executionContext
+
+        val sourceProvider: SourceProvider[Offset, EventEnvelope[Bike.Event]] =
+          EventSourcedProvider.eventsByTag[Bike.Event](system, CassandraReadJournal.Identifier, BikeTags.Single)
+        val projection = CassandraProjection.atLeastOnce(
+          projectionId = ProjectionId("bikes", BikeTags.Single),
+          sourceProvider,
+          handler = () => new BikeEventsHandler(BikeTags.Single, system, globalTreeRef))
+
+        context.spawn(ProjectionBehavior(projection), projection.projectionId.id)
+        //Projection Setup ends
 
         Behaviors.empty
       }

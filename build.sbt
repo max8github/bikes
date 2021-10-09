@@ -82,6 +82,9 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,//transitive to set
 
     "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.10",
-    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.10"
+    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.10",
+    "com.lightbend.akka" %% "akka-projection-core" % "1.2.2",
+    "com.lightbend.akka" %% "akka-projection-eventsourced" % "1.2.2",
+    "com.lightbend.akka" %% "akka-projection-cassandra" % "1.2.2"
   )
 }
