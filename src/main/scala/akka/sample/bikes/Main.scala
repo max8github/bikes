@@ -1,11 +1,13 @@
 package akka.sample.bikes
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ ActorSystem, SupervisorStrategy }
+import akka.actor.typed.{ ActorRef, ActorSystem, SupervisorStrategy }
+import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity }
 import akka.cluster.typed.{ ClusterSingleton, SingletonActor }
 import akka.http.scaladsl.server.Directives._
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
+import akka.sample.bikes.Procurement.Operation
 import akka.sample.bikes.tree.GlobalTreeActor
 import akka.{ actor => classic }
 import com.typesafe.config.ConfigFactory
@@ -26,7 +28,15 @@ object Main {
       val globalTreeRef = ClusterSingleton(context.system).init(SingletonActor(Behaviors.supervise(
         GlobalTreeActor()).onFailure[Exception](SupervisorStrategy.restart), "GlobalTreeActor"))
 
-      val guardian = context.spawn(FleetsMaster(globalTreeRef), "guardian")
+      val numShards = context.system.settings.config.getInt("akka.cluster.sharding.number-of-shards")
+      val messageExtractor = BikeMessageExtractor(numShards)
+
+      val procurement = context.spawn(Procurement(context.system), "procurement")
+      val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
+        Bike(entityContext.entityId, procurement, globalTreeRef, entityContext.shard, numShards)
+      }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
+
+      val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
       context.watch(guardian)
 
       context.spawn(ClusterListener(globalTreeRef), "ClusterListener")
@@ -76,7 +86,15 @@ object Main {
         val globalTreeRef = ClusterSingleton(context.system).init(SingletonActor(Behaviors.supervise(
           GlobalTreeActor()).onFailure[Exception](SupervisorStrategy.restart), "GlobalTreeActor"))
 
-        val guardian = context.spawn(FleetsMaster(globalTreeRef), "guardian")
+        val numShards = context.system.settings.config.getInt("akka.cluster.sharding.number-of-shards")
+        val messageExtractor = BikeMessageExtractor(numShards)
+
+        val procurement = context.spawn(Procurement(context.system), "procurement")
+        val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
+          Bike(entityContext.entityId, procurement, globalTreeRef, entityContext.shard, numShards)
+        }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
+
+        val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
         context.watch(guardian)
 
         val _ = context.spawn(ClusterListener(globalTreeRef), "ClusterListener")
