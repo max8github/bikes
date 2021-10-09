@@ -4,7 +4,6 @@ import akka.actor.testkit.typed.scaladsl.{ LogCapturing, ScalaTestWithActorTestK
 import akka.actor.typed.scaladsl.Behaviors
 import akka.cluster.sharding.typed.scaladsl.ClusterSharding
 import akka.sample.bikes.Procurement.{ SetMaxFailures, SetMode, SetSpeed, SomeOperation }
-import akka.sample.bikes.tree.GlobalTreeActor
 import com.typesafe.config.ConfigFactory
 import org.scalatest.wordspec.AnyWordSpecLike
 
@@ -47,14 +46,13 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       probe.expectMessageType[Procurement.Operation](3 seconds)
       mockedProcurement ! SetMode(false)
       probe.expectMessageType[Procurement.Operation](3 seconds)
-      val tree = spawn(GlobalTreeActor())
       val mockedShard = Behaviors.receiveMessage[ClusterSharding.ShardCommand] { _ =>
         Behaviors.same
       }
       val probeShard = spawn(mockedShard)
 
       val blueprint = Blueprint(NiUri("cc4c41e", "e1ea1e"))
-      val bike = spawn(Bike(blueprint.makeEntityId(), BikeTags.Single, mockedProcurement, tree, probeShard, numShards))
+      val bike = spawn(Bike(blueprint.makeEntityId(), BikeTags.Single, mockedProcurement, probeShard, numShards))
       bike ! DownloadCmd(blueprint)
       val msg = probe.expectMessageType[Procurement.SomeOperation](10 seconds)
       msg.name shouldBe "download()"
@@ -72,7 +70,6 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       procurement ! Procurement.SetMaxFailures(4)
       procurement ! Procurement.SetMode(false)
 
-      val tree = spawn(GlobalTreeActor())
       val mockedShard = Behaviors.receiveMessage[ClusterSharding.ShardCommand] { _ =>
         Behaviors.same
       }
@@ -81,7 +78,7 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       val blueprint = Blueprint(NiUri("cc4c41e", "e1ea1e"))
 
       val probe = createTestProbe[Command]()
-      val mockedBike = spawn(Behaviors.monitor(probe.ref, Bike(blueprint.makeEntityId(), BikeTags.Single, procurement, tree, clusterShard, numShards)))
+      val mockedBike = spawn(Behaviors.monitor(probe.ref, Bike(blueprint.makeEntityId(), BikeTags.Single, procurement, clusterShard, numShards)))
 
       mockedBike ! DownloadCmd(blueprint)
       probe.expectMessageType[DownloadCmd](10 seconds)

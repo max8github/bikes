@@ -9,9 +9,7 @@ import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, EntityTypeKey }
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, Recovery }
 import akka.persistence.typed.{ PersistenceId, RecoveryCompleted, SnapshotSelectionCriteria }
 import Procurement._
-import akka.sample.bikes.tree.GlobalTreeActor
 import scala.language.implicitConversions
-
 import scala.concurrent.duration.FiniteDuration
 
 /**
@@ -39,14 +37,12 @@ object Bike {
     if (st.endsWith("$")) st.replace("$", "") else st
   }
 
-  def apply(bikeId: String, bikeTag: String, ops: ActorRef[Operation], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand],
+  def apply(bikeId: String, bikeTag: String, ops: ActorRef[Operation],
     shard: ActorRef[ClusterSharding.ShardCommand], numOfShards: Int): Behavior[Command] = {
     implicit val ns = numOfShards
     Behaviors.setup { context =>
       Behaviors.withTimers { timers =>
         context.log.info("STARTING: {}", bikeId)
-        val path = fullPath(bikeId, context.system)
-        globalTreeRef ! GlobalTreeActor.AddEntity(path, InitState)
 
         val fsmTimeout = context.system.settings.config.getDuration("bikes.fsm-timeout").toMillis
         val timeout = FiniteDuration(fsmTimeout, TimeUnit.MILLISECONDS)
@@ -58,19 +54,15 @@ object Bike {
           EventSourcedBehavior[Command, Event, State](
             persistenceId = PersistenceId(typeKey.name, bikeId),
             emptyState = InitState,
-            commandHandler(context, ops, replyToMapper, globalTreeRef, shard, bikeId), //commandHandler, given a context, is a function: (State, Operation) => Effect[Event, State],
+            commandHandler(context, ops, replyToMapper, shard, bikeId), //commandHandler, given a context, is a function: (State, Operation) => Effect[Event, State],
             eventHandler(context, bikeId))
             .withTagger(a => Set(bikeTag))
             .receiveSignal {
               case (state, RecoveryCompleted) =>
                 context.log.info("Bike {} is RECOVERED, entity id {}, state {}", context.self, bikeId, state.getClass.getSimpleName)
-                val path = fullPath(bikeId, context.system)
-                globalTreeRef ! GlobalTreeActor.AddEntity(path, state)
                 Behaviors.same
               case (state, PostStop) =>
                 context.log.info("Bike {}\n\t\twith state {}\n\t\twith actor ref {}\n\t\tis now STOPPED", bikeId, state.getClass.getName, context.self)
-                val path = fullPath(bikeId, context.system)
-                globalTreeRef ! GlobalTreeActor.RemoveEntity(path)
                 Behaviors.same
             }.withRecovery(Recovery.withSnapshotSelectionCriteria(SnapshotSelectionCriteria.none))
 
@@ -88,17 +80,13 @@ object Bike {
   }
 
   private def commandHandler(context: ActorContext[Command], ops: ActorRef[Operation],
-    replyToMapper: ActorRef[Reply], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand],
+    replyToMapper: ActorRef[Reply],
     shard: ActorRef[ClusterSharding.ShardCommand], bikeId: String)(implicit numOfShards: Int): (State, Command) => Effect[Event, State] = { (state, command) =>
 
     def download(cmd: DownloadCmd): Effect[Event, State] = {
       ops ! SomeOperation(cmd.blueprint, replyToMapper, "download()")
       val evt = DownloadEvent(cmd.blueprint)
-      Effect.persist(evt).thenRun { newState =>
-        val path = fullPath(cmd.blueprint.makeEntityId(), context.system)
-        context.log.infoN("Blueprint {} with\n\t\t\tmember {},\n\t\t\tshard {}\n\t\t\tis being downloaded", cmd.blueprint.displayId, path.memberId, path.shardId)
-        globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-      }
+      Effect.persist(evt)
     }
 
     def downloaded(reply: Reply): Effect[Event, State] = reply match {
@@ -106,29 +94,19 @@ object Bike {
         val evt = DownloadedEvt(blueprint)
         Effect.persist(evt).thenRun { newState =>
           context.log.info2("Blueprint {} downloaded, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
           // todo (optional): can possibly use [Replies](https://doc.akka.io/docs/akka/current/typed/persistence.html#replies)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
           context.self ! CreateCmd(blueprint)
         }
 
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, InitState, DownloadCmd(blueprint))
-        Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while downloading blueprint {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-        } //.thenStop()
+        Effect.persist(evt) //.thenStop()
     }
 
     def create(cmd: CreateCmd): Effect[Event, State] = {
       ops ! SomeOperation(cmd.blueprint, replyToMapper, "create()")
       val evt = CreateEvent(cmd.blueprint)
-      Effect.persist(evt).thenRun { newState =>
-        context.log.info("Bike {} is being created ", cmd.blueprint.displayId)
-        val path = fullPath(bikeId, context.system)
-        globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-      }
+      Effect.persist(evt)
     }
 
     def created(reply: Reply): Effect[Event, State] = reply match {
@@ -137,18 +115,12 @@ object Bike {
         val evt = CreatedEvt(blueprint, NiUri(UUID.randomUUID().toString, s"www.bikes.com/locations/${blueprint.makeEntityId()}"))
         Effect.persist(evt).thenRun { newState =>
           context.log.info2("Bike {} created, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
           context.self ! ReserveCmd
         }
 
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, DownloadedState(blueprint), CreateCmd(blueprint))
-        Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while creating bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-        }
+        Effect.persist(evt)
     }
 
     def returnState(id: String, state: State, replyTo: ActorRef[BikeRoutesSupport.StatusResponse]): Effect[Event, State] = {
@@ -159,65 +131,41 @@ object Bike {
     def reserve(blueprint: Blueprint, location: NiUri): Effect[Event, State] = {
       ops ! SomeOperation(blueprint, replyToMapper, "reserve()")
       val evt = ReserveEvent(blueprint)
-      Effect.persist(evt).thenRun { newState =>
-        context.log.info("Bike {} is being reserved ", blueprint.displayId)
-        val path = fullPath(bikeId, context.system)
-        globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-      }
+      Effect.persist(evt)
     }
 
     def reserved(reply: Reply, location: NiUri): Effect[Event, State] = reply match {
       case OpCompleted(blueprint) =>
         val evt = ReservedEvt(blueprint)
-        Effect.persist(evt).thenRun { newState =>
-          context.log.info2("Bike {} reserved, state is now {}", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-        }
+        Effect.persist(evt)
 
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, CreatedState(blueprint, location), ReserveCmd)
         Effect.persist(evt).thenRun { newState: State =>
           context.log.info2("ERROR while reserving Bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         }
     }
 
     def `yield`(blueprint: Blueprint): Effect[Event, State] = {
       ops ! SomeOperation(blueprint, replyToMapper, "yield op")
       val evt = YieldEvent(blueprint)
-      Effect.persist(evt).thenRun { newState =>
-        context.log.info("Bike {} is being yielded ", blueprint.displayId)
-        val path = fullPath(bikeId, context.system)
-        globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-      }
+      Effect.persist(evt)
     }
 
     def yielded(reply: Reply, location: NiUri): Effect[Event, State] = reply match {
       case OpCompleted(blueprint) =>
         val evt = YieldedEvt(blueprint)
-        Effect.persist(evt).thenRun { newState =>
-          context.log.info2("Bike {} yielded, state is now {}", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-        }
+        Effect.persist(evt)
 
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, ReservedState(blueprint, location), YieldCmd)
-        Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while reserving bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
-          val path = fullPath(blueprint, context.system)
-          globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-        }
+        Effect.persist(evt)
     }
 
     def kickIt(commandToReIssue: Command, previousState: State): Effect[Event, State] = {
       val evt = KickEvent(previousState)
       Effect.persist(evt).thenRun { newState =>
         context.log.info2("Blocked bike kicked, state is now {}, commandToReIssue {} ", newState.getClass.getSimpleName, commandToReIssue.getClass.getSimpleName)
-        val path = fullPath(bikeId, context.system)
-        globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         context.log.info2("About to reissue command {} from state {} ", commandToReIssue.getClass.getSimpleName, newState.getClass.getSimpleName)
         context.self ! commandToReIssue
       }
@@ -235,11 +183,7 @@ object Bike {
         def goBack(stateToGoBackTo: State, commandToReIssue: Command) = {
           context.log.debug("Bike {} has been hanging (not reserved nor yielded) for too long", bikeId)
           val evt = ErrorEvent("Processing took too long: timed out", stateToGoBackTo, commandToReIssue)
-          Effect.persist(evt).thenRun { newState: State =>
-            context.log.info("Moved bike {} to error state ", bikeId)
-            val path = fullPath(bikeId, context.system)
-            globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-          }
+          Effect.persist[Event, State](evt)
         }
         st match {
           case ReservedState(_, _) | YieldedState(_, _) | ErrorState(_, _, _) | InitState => Effect.none
@@ -254,8 +198,6 @@ object Bike {
       case (_, GoodBye) =>
         // the stopMessage, used for rebalance and passivate
         context.log.debug("Received STOP MESSAGE for bike {} ", bikeId)
-        val path = fullPath(bikeId, context.system)
-        globalTreeRef ! GlobalTreeActor.RemoveEntity(path)
         Effect.stop()
 
       case (state, command) =>

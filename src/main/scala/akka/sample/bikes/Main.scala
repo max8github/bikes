@@ -39,7 +39,7 @@ object Main {
 
       val procurement = context.spawn(Procurement(context.system), "procurement")
       val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
-        Bike(entityContext.entityId, BikeTags.Single, procurement, globalTreeRef, entityContext.shard, numShards)
+        Bike(entityContext.entityId, BikeTags.Single, procurement, entityContext.shard, numShards)
       }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
 
       val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
@@ -97,7 +97,7 @@ object Main {
 
         val procurement = context.spawn(Procurement(context.system), "procurement")
         val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
-          Bike(entityContext.entityId, BikeTags.Single, procurement, globalTreeRef, entityContext.shard, numShards)
+          Bike(entityContext.entityId, BikeTags.Single, procurement, entityContext.shard, numShards)
         }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
 
         val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
