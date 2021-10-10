@@ -39,7 +39,9 @@ object Main {
 
       val procurement = context.spawn(Procurement(context.system), "procurement")
       val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
-        Bike(entityContext.entityId, BikeTags.Single, procurement, entityContext.shard, numShards)
+        val i = math.abs(entityContext.entityId.hashCode % BikeTags.Tags.size)
+        val selectedTag = BikeTags.Tags(i)
+        Bike(entityContext.entityId, selectedTag, procurement, entityContext.shard, numShards)
       }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
 
       val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
@@ -97,7 +99,9 @@ object Main {
 
         val procurement = context.spawn(Procurement(context.system), "procurement")
         val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
-          Bike(entityContext.entityId, BikeTags.Single, procurement, entityContext.shard, numShards)
+          val i = math.abs(entityContext.entityId.hashCode % BikeTags.Tags.size)
+          val selectedTag = BikeTags.Tags(i)
+          Bike(entityContext.entityId, selectedTag, procurement, entityContext.shard, numShards)
         }.withStopMessage(GoodBye).withMessageExtractor(messageExtractor))
 
         val guardian = context.spawn(FleetsMaster(shardingRegion), "guardian")
@@ -112,19 +116,7 @@ object Main {
         val host = config.getString("bikes.httpHost")
         new BikeService(routes, host, httpPort, context.system).start()
 
-        //Projection Setup (createProjectionFor)
-        val system = context.system
-        implicit val ec = system.executionContext
-
-        val sourceProvider: SourceProvider[Offset, EventEnvelope[Bike.Event]] =
-          EventSourcedProvider.eventsByTag[Bike.Event](system, CassandraReadJournal.Identifier, BikeTags.Single)
-        val projection = CassandraProjection.atLeastOnce(
-          projectionId = ProjectionId("bikes", BikeTags.Single),
-          sourceProvider,
-          handler = () => new BikeEventsHandler(BikeTags.Single, system, globalTreeRef))
-
-        context.spawn(ProjectionBehavior(projection), projection.projectionId.id)
-        //Projection Setup ends
+        BikeEventsProjection.init(context.system, globalTreeRef)
 
         Behaviors.empty
       }
