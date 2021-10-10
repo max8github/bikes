@@ -5,6 +5,11 @@ import akka.cluster.typed.Cluster
 import akka.sample.bikes.tree.NodePath
 import akka.actor.typed.ActorRef
 import akka.sample.bikes.tree.Repr
+import com.fasterxml.jackson.annotation.{ JsonSubTypes, JsonTypeInfo, JsonTypeName }
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import spray.json.{ JsObject, JsString, JsValue }
 import spray.json._
 
@@ -14,16 +19,65 @@ package object bikes {
   /**
    * This interface defines all the commands that the persistent actor supports.
    */
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+  @JsonSubTypes(
+    Array(
+      new JsonSubTypes.Type(value = classOf[Idle], name = "idle"),
+      new JsonSubTypes.Type(value = classOf[DownloadCmd], name = "downloadCmd"),
+      new JsonSubTypes.Type(value = classOf[CreateCmd], name = "createCmd"),
+      new JsonSubTypes.Type(value = classOf[GetStateCmd], name = "getStateCmd")))
   sealed trait Command extends CborSerializable
-  final case object Idle extends Command
-  final case object GoodBye extends Command
+
+  @JsonDeserialize(`using` = classOf[IdleDeserializer])
+  sealed trait Idle extends Command
+  @JsonTypeName("idle")
+  final case object Idle extends Idle
+  class IdleDeserializer extends StdDeserializer[Idle](Idle.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): Idle = Idle
+  }
+  @JsonDeserialize(`using` = classOf[GoodByeDeserializer])
+  sealed trait GoodBye extends Command
+  @JsonTypeName("goodBye")
+  final case object GoodBye extends GoodBye
+  class GoodByeDeserializer extends StdDeserializer[GoodBye](GoodBye.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): GoodBye = GoodBye
+  }
   final case class DownloadCmd(blueprint: Blueprint) extends Command
   final case class CreateCmd(blueprint: Blueprint) extends Command
-  final case object ReserveCmd extends Command
-  final case object YieldCmd extends Command
-  final case object KickCmd extends Command
-  final case class GetStateCmd(bikeId: String, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]) extends Command
-  final case object Timeout extends Command
+
+  @JsonDeserialize(`using` = classOf[ReserveCmdDeserializer])
+  sealed trait ReserveCmd extends Command
+  @JsonTypeName("reserveCmd")
+  final case object ReserveCmd extends ReserveCmd
+  class ReserveCmdDeserializer extends StdDeserializer[ReserveCmd](ReserveCmd.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): ReserveCmd = ReserveCmd
+  }
+
+  @JsonDeserialize(`using` = classOf[YieldCmdDeserializer])
+  sealed trait YieldCmd extends Command
+  @JsonTypeName("yieldCmd")
+  final case object YieldCmd extends YieldCmd
+  class YieldCmdDeserializer extends StdDeserializer[YieldCmd](YieldCmd.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): YieldCmd = YieldCmd
+  }
+
+  @JsonDeserialize(`using` = classOf[KickCmdDeserializer])
+  sealed trait KickCmd extends Command
+  @JsonTypeName("kickCmd")
+  final case object KickCmd extends KickCmd
+  class KickCmdDeserializer extends StdDeserializer[KickCmd](KickCmd.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): KickCmd = KickCmd
+  }
+
+  final case class GetStateCmd(bikeId: String, replyTo: ActorRef[BikeRoutesSupport.StatusResponse]) extends Command
+
+  @JsonDeserialize(`using` = classOf[TimeoutDeserializer])
+  sealed trait Timeout extends Command
+  @JsonTypeName("timeout")
+  final case object Timeout extends Timeout
+  class TimeoutDeserializer extends StdDeserializer[Timeout](Timeout.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): Timeout = Timeout
+  }
 
   /**
    * The purpose of a wrapping class like this is to avoid circular dependencies between sender and receiver actors.
@@ -62,8 +116,28 @@ package object bikes {
   case class OpCompleted(blueprint: Blueprint) extends Reply
   case class OpFailed(blueprint: Blueprint, reason: String) extends Reply
 
+  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+  @JsonSubTypes(
+    Array(
+      new JsonSubTypes.Type(value = classOf[InitState], name = "initState"),
+      new JsonSubTypes.Type(value = classOf[DownloadingState], name = "downloadingState"),
+      new JsonSubTypes.Type(value = classOf[DownloadedState], name = "downloadedState"),
+      new JsonSubTypes.Type(value = classOf[CreatingState], name = "creatingState"),
+      new JsonSubTypes.Type(value = classOf[CreatedState], name = "createdState"),
+      new JsonSubTypes.Type(value = classOf[ReservingState], name = "reservingState"),
+      new JsonSubTypes.Type(value = classOf[ReservedState], name = "reservedState"),
+      new JsonSubTypes.Type(value = classOf[YieldingState], name = "yieldingState"),
+      new JsonSubTypes.Type(value = classOf[YieldedState], name = "yieldedState"),
+      new JsonSubTypes.Type(value = classOf[ErrorState], name = "errorState")))
   sealed trait State extends CborSerializable
-  final case object InitState extends State
+
+  @JsonDeserialize(`using` = classOf[InitStateDeserializer])
+  sealed trait InitState extends State
+  @JsonTypeName("initState")
+  case object InitState extends InitState
+  class InitStateDeserializer extends StdDeserializer[InitState](InitState.getClass) {
+    override def deserialize(p: JsonParser, ctxt: DeserializationContext): InitState = InitState
+  }
   final case class DownloadingState(blueprint: Blueprint) extends State
   final case class DownloadedState(blueprint: Blueprint) extends State
   final case class CreatingState(blueprint: Blueprint) extends State
@@ -176,18 +250,13 @@ package object bikes {
 
     }
 
-    implicit object QueryStatusFormat extends RootJsonWriter[BikeRoutesSupport.QueryStatus] {
-      def write(c: BikeRoutesSupport.QueryStatus) = JsObject(
-        "bikeId" -> JsString(c.bikeId),
-        "state" -> c.state.toJson)
-    }
-
+    implicit val queryStatusFormat = jsonFormat2(BikeRoutesSupport.StatusResponse)
   }
 
   object BikeRoutesSupport extends SprayJsonSupport {
     sealed trait Status extends CborSerializable
     final case class Inventory(entities: List[Repr]) extends Status
-    final case class QueryStatus(bikeId: String, state: State) extends Status
+    final case class StatusResponse(bikeId: String, state: String) extends Status
   }
 
   /** Represents the coordinates of a resource, the unique way to identify a certain resource like blueprint parts. */

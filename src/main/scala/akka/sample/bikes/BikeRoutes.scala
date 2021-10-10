@@ -54,7 +54,7 @@ private[bikes] final class BikeRoutes(
           path(Segment) { bikeId =>
             concat(
               get {
-                val f: Future[BikeRoutesSupport.QueryStatus] = guardian.ask(replyTo => FleetsMaster.GetBike(bikeId, replyTo))
+                val f: Future[BikeRoutesSupport.StatusResponse] = guardian.ask(replyTo => FleetsMaster.GetBike(bikeId, replyTo))
                 onSuccess(f) { performed =>
                   complete(StatusCodes.OK -> performed)
                 }
