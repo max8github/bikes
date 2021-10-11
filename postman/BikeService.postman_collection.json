@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f02bd15c-2709-4f4c-a3c2-f48f6e5f0f80",
+		"_postman_id": "d45e4c90-24ae-4690-a361-b0ac4075f1e2",
 		"name": "BikeService",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -11,7 +11,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							"function create_UUID(){",
 							"    var dt = new Date().getTime();",
@@ -20,6 +19,7 @@
 							"        dt = Math.floor(dt/16);",
 							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
 							"    });",
+							"    uuid = uuid.substring(0, 8);",
 							"    return uuid;",
 							"}",
 							"",
@@ -32,7 +32,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
 						"exec": [
 							"pm.environment.set(\"bikeId\", pm.response.text());",
 							""
@@ -74,7 +73,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -116,7 +114,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -126,13 +123,84 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "703cc830-b177-470b-aff8-042557d62307",
 						"exec": [
 							"var jsonData = pm.response.json();",
 							"if(jsonData.entities.length > 0) {",
-							"    pm.environment.set(\"bikeId\", jsonData.entities[0].id);",
+							"    // pm.environment.set(\"bikeId\", jsonData.entities[0].id);",
+							"    pm.environment.set(\"version_uuid\", jsonData.entities[0].id);",
 							"}",
-							""
+							"",
+							"//visualizer",
+							"var template = `",
+							"    <style type=\"text/css\">",
+							"        .tftable {font-size:14px;color:#333333;width:100%;border-width: 1px;border-color: #87ceeb;border-collapse: collapse;}",
+							"        .tftable th {font-size:18px;background-color:#87ceeb;border-width: 1px;padding: 8px;border-style: solid;border-color: #87ceeb;text-align:left;}",
+							"        .tftable tr {background-color:#ffffff;}",
+							"        .tftable td {font-size:14px;border-width: 1px;padding: 8px;border-style: solid;border-color: #87ceeb;}",
+							"        .tftable tr:hover {background-color:#e0ffff;}",
+							"    </style>",
+							"",
+							"    <table id=\"tblData\" class=\"tftable\" border=\"1\">",
+							"        <tr>",
+							"            <th>entity id</th>",
+							"            <th>state</th>",
+							"        </tr>",
+							"        ",
+							"        {{#each response.entities}}",
+							"            <tr id=row_{{@key}} onClick=\"handleClick(this.id)\">",
+							"                <td id={{@key}}>{{id}}</td>",
+							"                <td style=\"color:#0000ff\" bgColor=\"{{_colorCode}}\">{{state}}</td>",
+							"            </tr>",
+							"        {{/each}}",
+							"    </table>",
+							"`;",
+							"",
+							"function circleColor(d) {",
+							"    switch(d) {",
+							"        case 'InitState':",
+							"        return 'grey';",
+							"        break;",
+							"        case 'DownloadingState':",
+							"        return '#b091ff';   //violet",
+							"        break;",
+							"        case 'DownloadedState':",
+							"        return '#84c2ff';   //light blue",
+							"        break;",
+							"        case 'CreatingState':",
+							"        return '#7fffee';   //lighter blue",
+							"        break;",
+							"        case 'CreatedState':",
+							"        return '#47ff2f';   //light green",
+							"        break;",
+							"        case 'ReservingState':",
+							"        return '#dcff2b';   //yellow",
+							"        break;",
+							"        case 'ReservedState':",
+							"        return '#ff9f22';   //orange",
+							"        break;",
+							"        case 'YieldingState':",
+							"        return '#e882c3';   //pink red",
+							"        break;",
+							"        case 'YieldedState':",
+							"        return 'green';     //dark green",
+							"        break;",
+							"        case 'ErrorState':",
+							"        return 'red';",
+							"        break;",
+							"        default:",
+							"        return 'black';",
+							"    }",
+							"}",
+							"",
+							"let json = pm.response.json();",
+							"for (let i in json.entities) {",
+							"    let colorCode = circleColor(json.entities[i].state);",
+							"    json.entities[i]._colorCode = colorCode;",
+							"};",
+							"",
+							"pm.visualizer.set(template, {",
+							"    response: json",
+							"});"
 						],
 						"type": "text/javascript"
 					}
@@ -174,7 +242,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -219,7 +286,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -229,7 +295,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
 						"exec": [
 							""
 						],
@@ -267,7 +332,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -277,7 +341,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
 						"exec": [
 							""
 						],
@@ -328,7 +391,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -338,7 +400,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
 						"exec": [
 							""
 						],
@@ -376,7 +437,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -386,7 +446,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "3e32a07d-56dd-4e94-94d7-9aa551fe21f3",
 						"exec": [
 							""
 						],
@@ -424,7 +483,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "fd435fd8-b57f-4558-ae2a-97e97dd110ba",
 						"exec": [
 							""
 						],
@@ -462,7 +520,6 @@
 		{
 			"listen": "prerequest",
 			"script": {
-				"id": "ec092751-eb58-4fc9-8b84-87c1df38c95e",
 				"type": "text/javascript",
 				"exec": [
 					""
@@ -472,13 +529,11 @@
 		{
 			"listen": "test",
 			"script": {
-				"id": "2ad59958-8bdc-4ebd-9fd0-b625a5236d6f",
 				"type": "text/javascript",
 				"exec": [
 					""
 				]
 			}
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }
