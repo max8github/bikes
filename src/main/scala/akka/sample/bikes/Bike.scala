@@ -6,11 +6,10 @@ import java.util.concurrent.TimeUnit
 import akka.actor.typed._
 import akka.actor.typed.scaladsl.{ ActorContext, Behaviors, LoggerOps }
 import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, EntityTypeKey }
-import akka.cluster.typed.Cluster
 import akka.persistence.typed.scaladsl.{ Effect, EventSourcedBehavior, Recovery }
 import akka.persistence.typed.{ PersistenceId, RecoveryCompleted, SnapshotSelectionCriteria }
 import Procurement._
-import akka.sample.bikes.tree.{ GlobalTreeActor, NodePath }
+import akka.sample.bikes.tree.GlobalTreeActor
 import scala.language.implicitConversions
 
 import scala.concurrent.duration.FiniteDuration
@@ -151,8 +150,8 @@ object Bike {
         }
     }
 
-    def getState(id: String, state: State, replyTo: ActorRef[BikeRoutesSupport.QueryStatus]): Effect[Event, State] = {
-      replyTo ! BikeRoutesSupport.QueryStatus(id, state)
+    def returnState(id: String, state: State, replyTo: ActorRef[BikeRoutesSupport.StatusResponse]): Effect[Event, State] = {
+      replyTo ! BikeRoutesSupport.StatusResponse(id, state)
       Effect.none
     }
 
@@ -226,7 +225,7 @@ object Bike {
     (state, command) match {
       case (_, GetStateCmd(bikeId, replyTo)) =>
         context.log.debug("GET Bike state: {}", state.getClass.getSimpleName)
-        getState(bikeId, state, replyTo)
+        returnState(bikeId, state, replyTo)
       case (_, Idle) =>
         context.log.debug("Received IDLE MESSAGE timeout for bike {} ", bikeId)
         shard ! ClusterSharding.Passivate(context.self)
