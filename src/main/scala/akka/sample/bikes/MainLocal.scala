@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 
 object MainLocal {
   def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load("application_local.conf")
+    val config = ConfigFactory.load("application_local_cassandra.conf")
     val httpPort = config.getInt("bikes.httpPort")
 
     for {
