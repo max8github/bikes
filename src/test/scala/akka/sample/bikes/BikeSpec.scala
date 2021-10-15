@@ -52,7 +52,7 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       val probeShard = spawn(mockedShard)
 
       val blueprint = Blueprint(NiUri("cc4c41e", "e1ea1e"))
-      val bike = spawn(Bike(blueprint.makeEntityId(), BikeTags.Single, mockedProcurement, probeShard, numShards))
+      val bike = spawn(Bike(blueprint.makeEntityId(), BikeTags.Tags(0), mockedProcurement, probeShard, numShards))
       bike ! DownloadCmd(blueprint)
       val msg = probe.expectMessageType[Procurement.SomeOperation](10 seconds)
       msg.name shouldBe "download()"
@@ -78,7 +78,7 @@ class BikeSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with LogCa
       val blueprint = Blueprint(NiUri("cc4c41e", "e1ea1e"))
 
       val probe = createTestProbe[Command]()
-      val mockedBike = spawn(Behaviors.monitor(probe.ref, Bike(blueprint.makeEntityId(), BikeTags.Single, procurement, clusterShard, numShards)))
+      val mockedBike = spawn(Behaviors.monitor(probe.ref, Bike(blueprint.makeEntityId(), BikeTags.Tags(0), procurement, clusterShard, numShards)))
 
       mockedBike ! DownloadCmd(blueprint)
       probe.expectMessageType[DownloadCmd](10 seconds)

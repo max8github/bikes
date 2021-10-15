@@ -14,17 +14,21 @@ import akka.sample.bikes.tree.GlobalTreeActor
 
 object BikeEventsProjection {
 
-  def init(context: ActorContext[_], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand]) = {
-    val system = context.system
-    implicit val ec = system.executionContext
+  def init(system: ActorSystem[Nothing], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand]) = {
 
-    val sourceProvider: SourceProvider[Offset, EventEnvelope[Bike.Event]] =
-      EventSourcedProvider.eventsByTag[Bike.Event](system, CassandraReadJournal.Identifier, BikeTags.Single)
-    val projection = CassandraProjection.atLeastOnce(
-      projectionId = ProjectionId("bikes", BikeTags.Single),
-      sourceProvider,
-      handler = () => new BikeEventsHandler(BikeTags.Single, system, globalTreeRef))
+    def sourceProvider(tag: String): SourceProvider[Offset, EventEnvelope[Bike.Event]] =
+      EventSourcedProvider.eventsByTag[Bike.Event](system, CassandraReadJournal.Identifier, tag)
 
-    context.spawn(ProjectionBehavior(projection), projection.projectionId.id)
+    def projection(tag: String) =
+      CassandraProjection.atLeastOnce(
+        projectionId = ProjectionId("bikes", tag),
+        sourceProvider(tag),
+        handler = () => new BikeEventsHandler(tag, system, globalTreeRef))
+
+    ShardedDaemonProcess(system).init[ProjectionBehavior.Command](
+      name = "bikes",
+      numberOfInstances = BikeTags.Tags.size,
+      behaviorFactory = (i: Int) => ProjectionBehavior(projection(BikeTags.Tags(i))),
+      stopMessage = ProjectionBehavior.Stop)
   }
 }
