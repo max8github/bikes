@@ -15,6 +15,8 @@ lazy val akkaCassandraVersion    = "1.0.5"
 lazy val scalatestVersion = "3.2.8"
 val gatlingBundleName = "gatling-charts-highcharts-bundle"
 val gatlingVersion = "3.5.1"
+val akkaProjectionVersion = "1.2.2"
+val akkaManagementVersion = "1.0.10"
 
 enablePlugins(GatlingPlugin)
 
@@ -81,7 +83,10 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-distributed-data" % akkaVersion,//transitive to set
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,//transitive to set
 
-    "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.10",
-    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.10"
+    "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % akkaManagementVersion,
+    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % akkaManagementVersion,
+    "com.lightbend.akka" %% "akka-projection-core" % akkaProjectionVersion,
+    "com.lightbend.akka" %% "akka-projection-eventsourced" % akkaProjectionVersion,
+    "com.lightbend.akka" %% "akka-projection-cassandra" % akkaProjectionVersion
   )
 }

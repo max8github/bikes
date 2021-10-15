@@ -20,17 +20,17 @@ import scala.concurrent.duration.FiniteDuration
 object Bike {
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("Bike")
 
-  private sealed trait Event extends CborSerializable
-  private final case class DownloadEvent(blueprint: Blueprint) extends Event
-  private final case class DownloadedEvt(blueprint: Blueprint) extends Event
-  private final case class CreateEvent(blueprint: Blueprint) extends Event
-  private final case class CreatedEvt(blueprint: Blueprint, location: NiUri) extends Event
-  private final case class ReserveEvent(blueprint: Blueprint) extends Event
-  private final case class ReservedEvt(blueprint: Blueprint) extends Event
-  private final case class YieldEvent(blueprint: Blueprint) extends Event
-  private final case class YieldedEvt(blueprint: Blueprint) extends Event
-  private final case class KickEvent(previousState: State) extends Event
-  private final case class ErrorEvent(errorMessage: String, previousState: State, causeCommand: Command) extends Event
+  sealed trait Event extends CborSerializable
+  final case class DownloadEvent(blueprint: Blueprint) extends Event
+  final case class DownloadedEvt(blueprint: Blueprint) extends Event
+  final case class CreateEvent(blueprint: Blueprint) extends Event
+  final case class CreatedEvt(blueprint: Blueprint, location: NiUri) extends Event
+  final case class ReserveEvent(blueprint: Blueprint) extends Event
+  final case class ReservedEvt(blueprint: Blueprint) extends Event
+  final case class YieldEvent(blueprint: Blueprint) extends Event
+  final case class YieldedEvt(blueprint: Blueprint) extends Event
+  final case class KickEvent(previousState: State) extends Event
+  final case class ErrorEvent(errorMessage: String, previousState: State, causeCommand: Command) extends Event
 
   private case object TimerKey extends CborSerializable
 
@@ -39,7 +39,7 @@ object Bike {
     if (st.endsWith("$")) st.replace("$", "") else st
   }
 
-  def apply(bikeId: String, ops: ActorRef[Operation], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand],
+  def apply(bikeId: String, bikeTag: String, ops: ActorRef[Operation], globalTreeRef: ActorRef[GlobalTreeActor.TreeCommand],
     shard: ActorRef[ClusterSharding.ShardCommand], numOfShards: Int): Behavior[Command] = {
     implicit val ns = numOfShards
     Behaviors.setup { context =>
@@ -60,6 +60,7 @@ object Bike {
             emptyState = InitState,
             commandHandler(context, ops, replyToMapper, globalTreeRef, shard, bikeId), //commandHandler, given a context, is a function: (State, Operation) => Effect[Event, State],
             eventHandler(context, bikeId))
+            .withTagger(a => Set(bikeTag))
             .receiveSignal {
               case (state, RecoveryCompleted) =>
                 context.log.info("Bike {} is RECOVERED, entity id {}, state {}", context.self, bikeId, state.getClass.getSimpleName)
