@@ -5,8 +5,11 @@ This demo uses a number of Akka features: [Typed Actors](https://doc.akka.io/doc
 [Akka Persistence](https://doc.akka.io/docs/akka/current/typed/index-persistence.html),
 [FSM](https://doc.akka.io/docs/akka/current/typed/fsm.html),
 [Cluster Singleton](https://doc.akka.io/docs/akka/current/typed/cluster-singleton.html#cluster-singleton).
+[Akka Projections](https://doc.akka.io/docs/akka-projection/current/overview.html).
 
-It implements an imaginary bicycle service described [below](#bikes-service).  
+It implements an imaginary bicycle service described [below](#bikes-service) 
+(without much detail: the lifecycle of a bike request is coded as an actor, 
+which will go through a bunch of states, like a finite state machine. See the FSM diagram [here](docs/fsm.puml)). 
 This service can be deployed on Kubernetes along with Cassandra.  
 Other components this service interacts with are:
 * a REST [client](#client)
