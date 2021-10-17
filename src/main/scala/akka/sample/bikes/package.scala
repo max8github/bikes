@@ -16,6 +16,8 @@ import spray.json._
 package object bikes {
   import akka.cluster.sharding.typed.{ ShardingEnvelope, ShardingMessageExtractor }
 
+  type BikeId = String
+
   /**
    * This interface defines all the commands that the persistent actor supports.
    */

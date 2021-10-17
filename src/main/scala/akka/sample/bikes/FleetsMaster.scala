@@ -8,8 +8,6 @@ import akka.sample.bikes
 /** The entry point to the cluster and sharded data. Guardian of bikes. */
 private[bikes] object FleetsMaster {
 
-  type BikeId = String
-
   sealed trait Command extends CborSerializable
   /**
    * Data received by the cluster from externally.

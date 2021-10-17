@@ -167,8 +167,7 @@ text {
 
       function mytext(d) {
         if(d.data.type == 'entity')
-            //return JSON.parse(d.data.name).version.substring(0,6) + " - " + d.data.nodeState
-            return d.data.name.substring(0,6)
+            return d.data.name // + " - " + d.data.nodeState
         else return d.data.name
       }
 
