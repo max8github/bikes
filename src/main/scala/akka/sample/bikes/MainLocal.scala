@@ -16,8 +16,8 @@ object MainLocal {
 
     for {
       akkaPort <- calculatePorts(args, config)
-      port <- attemptHttpPort(if (akkaPort == 2553) httpPort else s"80${10 + Random.nextInt(80)}".toInt)
-    } Main.startNode(configOverride(akkaPort, config), port)
+      hPort <- attemptHttpPort(if (akkaPort == 2553) httpPort else s"80${10 + Random.nextInt(80)}".toInt)
+    } Main.startNode(configOverride(akkaPort, hPort, config))
   }
 
   def attemptHttpPort(attempt: Int): Option[Int] = {
@@ -34,10 +34,11 @@ object MainLocal {
       ds.close()
   }
 
-  def configOverride(port: Int, config: Config): Config =
+  def configOverride(port: Int, httpPort: Int, config: Config): Config =
     ConfigFactory.parseString(
       s"""
        akka.remote.artery.canonical.port = $port
+       bikes.httpPort = $httpPort
         """).withFallback(config)
 
   def calculatePorts(args: Array[String], config: Config) = {

@@ -14,7 +14,7 @@ import com.typesafe.config.Config
  */
 object Main {
 
-  def startNode(config: Config, httpPort: Int): Unit = {
+  def startNode(config: Config): Unit = {
 
     val rootBehavior = Behaviors.setup[Nothing] { context =>
 
@@ -41,6 +41,7 @@ object Main {
       import akka.actor.typed.scaladsl.adapter._
       implicit val classicSystem: classic.ActorSystem = context.system.toClassic
       val host = config.getString("bikes.httpHost")
+      val httpPort = config.getInt("bikes.httpPort")
       new BikeService(routes, host, httpPort, context.system).start()
 
       BikeEventsProjection.init(context.system, globalTreeRef)
