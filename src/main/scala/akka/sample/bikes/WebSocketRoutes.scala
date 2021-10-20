@@ -9,11 +9,13 @@ import akka.http.scaladsl.server.Directives.{ handleWebSocketMessages, _ }
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.PathDirectives.path
 import akka.pattern.ask
-import akka.sample.bikes.tree.GlobalTreeActor
+import akka.sample.bikes.tree.{ GlobalTreeActor, Node }
 import akka.stream.scaladsl.GraphDSL.Implicits._
 import akka.stream.scaladsl.{ Flow, GraphDSL, Keep, Sink, Source }
 import akka.stream.{ CompletionStrategy, FlowShape, OverflowStrategy }
 import akka.util.Timeout
+import spray.json._
+import akka.sample.bikes.tree.NodeProtocol._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -75,6 +77,12 @@ object WebSocketRoutes {
 
       case s: String =>
         treeString = s
+
+      case n: Node =>
+        println(s" tree: $n")
+        val json = n.toJson
+        println(s" json: $json")
+        treeString = json.compactPrint
     }
   }
 

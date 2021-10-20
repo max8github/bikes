@@ -91,5 +91,16 @@ private[bikes] final class BikeRoutes(
             }
           }
         }
+      } ~
+      pathPrefix("tree") {
+        pathEnd {
+          get {
+            import akka.sample.bikes.tree.Node
+            val f: Future[Node] = globalTreeRef.ask(replyTo => GlobalTreeActor.GetJson(replyTo))
+            onSuccess(f) { performed =>
+              complete((StatusCodes.OK, performed))
+            }
+          }
+        }
       }
 }

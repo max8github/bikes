@@ -20,12 +20,12 @@ class GlobalTreeActorSpec extends Matchers with AnyFunSpecLike
       testKit.run(GlobalTreeActor.AddMember("bikes", "MemberUp"))
       testKit.run(GlobalTreeActor.AddEntity(NodePath("bikes", "shard1", "e1")))
       testKit.run(GlobalTreeActor.AddEntity(NodePath("bikes", "shard1", "e2")))
-      val inbox = TestInbox[String]()
+      val inbox = TestInbox[Node]()
       testKit.run(GlobalTreeActor.GetJson(inbox.ref))
-      val jsonString = inbox.receiveMessage()
-      val jsv = jsonString.parseJson
-      val n = jsv.convertTo[Node]
+      val n = inbox.receiveMessage()
       println(s" tree: $n")
+      val json = n.toJson
+      println(s" json: $json")
 
       n mustEqual nExpected
     }

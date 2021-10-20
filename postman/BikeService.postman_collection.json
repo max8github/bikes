@@ -237,10 +237,98 @@
 			"response": []
 		},
 		{
+			"name": "Get Tree D3.js",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var template = `",
+							"    <style type=\"text/css\">",
+							"        .tftable {font-size:14px;color:#333333;width:100%;border-width: 1px;border-color: #87ceeb;border-collapse: collapse;}",
+							"        .tftable th {font-size:18px;background-color:#87ceeb;border-width: 1px;padding: 8px;border-style: solid;border-color: #87ceeb;text-align:left;}",
+							"        .tftable tr {background-color:#ffffff;}",
+							"        .tftable td {font-size:14px;border-width: 1px;padding: 8px;border-style: solid;border-color: #87ceeb;}",
+							"        .tftable tr:hover {background-color:#e0ffff;}",
+							"    </style>",
+							"",
+							"    <table id=\"tblData\" class=\"tftable\" border=\"1\">",
+							"        <tr>",
+							"            <th>child name</th>",
+							"            <th>state</th>",
+							"        </tr>",
+							"        ",
+							"        {{#each response.children}}",
+							"            <tr id=row_{{@key}} onClick=\"handleClick(this.id)\">",
+							"                <td id={{@key}}>{{name}}</td>",
+							"                <td>{{nodeState}}</td>",
+							"            </tr>",
+							"        {{/each}}",
+							"    </table>",
+							"`;",
+							"",
+							"",
+							"pm.visualizer.set(template, {",
+							"    response: pm.response.json()",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/tree",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"tree"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Get",
 			"event": [
 				{
 					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
 					"script": {
 						"exec": [
 							""

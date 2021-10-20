@@ -12,7 +12,7 @@ object GlobalTreeActor {
   final case class RemoveMember(memberId: String) extends TreeCommand
   final case class RemoveEntity(path: NodePath) extends TreeCommand
   final case class GetInventory(replyTo: ActorRef[BikeRoutesSupport.Inventory]) extends TreeCommand
-  final case class GetJson(replyTo: ActorRef[String]) extends TreeCommand
+  final case class GetJson(replyTo: ActorRef[Node]) extends TreeCommand
   case object Bye extends TreeCommand
 
   def apply(): Behavior[TreeCommand] = {
@@ -33,7 +33,7 @@ object GlobalTreeActor {
           replyTo ! BikeRoutesSupport.Inventory(ids)
           Behaviors.same
         case GetJson(replyTo) =>
-          replyTo ! root.toJson.compactPrint
+          replyTo ! root
           Behaviors.same
         case Bye =>
           // Possible async action then stop

@@ -206,6 +206,7 @@ package object bikes {
     implicit val coordsFormat = jsonFormat2(NiUri)
     implicit val blueprintFormat = jsonFormat4(Blueprint)
     implicit val inventoryFormat = jsonFormat1(Inventory)
+    implicit val nodeFormato = jsonFormat4(akka.sample.bikes.tree.Node)
 
     implicit object InitStateJsonFormat extends JsonWriter[InitState.type] {
       def write(c: InitState.type) = JsObject("state" -> JsString("init"))
