@@ -36,21 +36,28 @@ text {
     var webSocket;
 
     function sendWebSocketRequest(request) {
+      //There are two sections here, in this conditional.
+      //This first one is for sending info from the web page to the server:
       if (webSocket && webSocket.readyState == WebSocket.OPEN) {
-        webSocket.send('hi');
+        if(request) {
+          webSocket.send(request);
+        } else {
+          webSocket.send('getTree');
+        }
       } else {
+        //This entire 'else' section is for setting up the connection at first. It is called only once, at start.
+        //Its call backs (like 'onmessage') are used to send info from the server to here and they are continuously called.
         webSocket = new WebSocket('ws://127.0.0.1:8084/events');   //webSocket = new WebSocket('ws://' + location.host + '/events');
         update({ 'name': 'cluster', 'type': 'cluster' });
 
         webSocket.onopen = function(event) {
           console.log('WebSocket connected', event);
-          webSocket.send('hi');
+          webSocket.send('getTree');
         }
 
         webSocket.onmessage = function(event) {
           console.log(event);
-          root = JSON.parse(event.data);
-          update(root);
+          update(JSON.parse(event.data));
         }
 
         webSocket.onerror = function(error) {
@@ -331,9 +338,11 @@ text {
     function clickCircle(d) {
         if (d.data.type.indexOf('member') >= 0) {
             console.log(d.data.name);
+            sendWebSocketRequest(d.data.name);
         } else if (d.data.type.indexOf('entity') >= 0) {
             console.log(d.data.nodeState);
-            sendWebSocketRequest(d.data.name);
+            if(d.data.nodeState.indexOf("ErrorState") >= 0)
+              sendWebSocketRequest(d.data.name);
         }
     }
 

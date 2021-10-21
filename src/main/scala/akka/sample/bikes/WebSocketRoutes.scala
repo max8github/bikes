@@ -1,8 +1,10 @@
 package akka.sample.bikes
 
-import akka.actor.Props
+import akka.actor.{ AddressFromURIString, Props }
 import akka.actor.typed.scaladsl.ActorContext
-import akka.actor.typed.{ ActorRef, ActorSystem }
+import akka.actor.typed.ActorRef
+import akka.cluster.sharding.typed.scaladsl.ClusterSharding
+import akka.cluster.typed.{ Cluster, Leave }
 import akka.{ actor => classic }
 import akka.http.scaladsl.model.ws.{ BinaryMessage, Message, TextMessage }
 import akka.http.scaladsl.server.Directives.{ handleWebSocketMessages, _ }
@@ -37,8 +39,6 @@ object WebSocketRoutes {
     implicit val as = context.system
     implicit val ex = as.dispatcher
 
-    var treeString = """{"name":"cluster","type":"cluster"}"""
-
     val completion: PartialFunction[Any, CompletionStrategy] = {
       case akka.actor.Status.Success(s: CompletionStrategy) => s
       case akka.actor.Status.Success(_) => CompletionStrategy.Draining
@@ -71,18 +71,19 @@ object WebSocketRoutes {
         })
         sender() ! flow
 
-      case s: String if s == "hi" =>
-        treeActor ! GlobalTreeActor.GetJson(self)
-        down ! treeString
-
       case s: String =>
-        treeString = s
+        //we get this message from websocket, from the HTML page
+        if (s == "getTree")
+          treeActor ! GlobalTreeActor.GetJson(self)
+        else if (s.startsWith("akka"))
+          Cluster(as.toTyped).manager ! Leave(AddressFromURIString(s))
+        else
+          ClusterSharding(as.toTyped).entityRefFor(Bike.typeKey, s) ! KickCmd
 
       case n: Node =>
-        println(s" tree: $n")
-        val json = n.toJson
-        println(s" json: $json")
-        treeString = json.compactPrint
+        //GlobalTreeActor sends a message back that is handled here.
+        // From here we sends its model info (the tree, that is 'n') to the HTML page thru websocket.
+        down ! n.toJson.compactPrint
     }
   }
 

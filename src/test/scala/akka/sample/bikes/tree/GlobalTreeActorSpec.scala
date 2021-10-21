@@ -23,7 +23,6 @@ class GlobalTreeActorSpec extends Matchers with AnyFunSpecLike
       val inbox = TestInbox[Node]()
       testKit.run(GlobalTreeActor.GetJson(inbox.ref))
       val n = inbox.receiveMessage()
-      println(s" tree: $n")
       val json = n.toJson
       println(s" json: $json")
 
