@@ -31,8 +31,27 @@ text {
 </style>
 <div id='chart'><svg></svg></div>
 <script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/patorjk/d3-context-menu@master/js/d3-context-menu.js"></script>
 <script>
+    let menu = [
+      {
+        title: 'Item #1',
+        action: function(d) {
+          console.log('Item #1 clicked!');
+          console.log('The data for this circle is: ' + d);
+        },
+        disabled: false // optional, defaults to false
+      },
+      {
+        title: 'Item #2',
+        action: function(d) {
+          console.log('You have clicked the second item!');
+          console.log('The data for this circle is: ' + d);
+        }
+      }
+    ]
 
+    var datam = [1, 2, 3];
     var webSocket;
 
     function sendWebSocketRequest(request) {
@@ -149,6 +168,7 @@ text {
         .attr('stroke-width', '0.02%')
         .attr('class', d => 'node ' + d.data.type)
         .attr('transform', d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
+        .on('contextmenu', d3.contextMenu(menu)) // attach menu to element
         .on('mouseover', function() {
           d3.select(this).select('text').style('font-size', 24).style('fill', '#046E97');
         })

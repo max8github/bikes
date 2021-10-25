@@ -34,6 +34,9 @@ private[bikes] final class BikeRoutes(
     pathPrefix("monitor") {
       getFromResource("monitor.html", ContentTypes.`text/html(UTF-8)`)
     } ~
+      path("js" / Remaining) { resource =>
+        getFromResource(resource)
+      } ~
       pathPrefix("bike") {
         concat(
           pathEnd {
