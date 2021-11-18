@@ -7,3 +7,5 @@ addSbtPlugin("io.spray" % "sbt-revolver" % "0.9.1")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.5.2")
 
 addSbtPlugin("io.gatling" % "gatling-sbt" % "3.0.0")
+
+addSbtPlugin("com.lightbend.cinnamon" % "sbt-cinnamon" % "2.16.2")

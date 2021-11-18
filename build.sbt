@@ -1,6 +1,6 @@
 import com.typesafe.sbt.packager.docker.DockerChmodType
 
-ThisBuild /organization := "me.rerun"
+ThisBuild / organization := "me.rerun"
 
 //resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -26,6 +26,17 @@ Compile / mainClass := Some("akka.sample.bikes.Main")
 
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(DockerPlugin)
+// Enable the Lightbend Telemetry (Cinnamon) sbt plugin
+lazy val app = project in file(".") enablePlugins (Cinnamon)
+// Add the Cinnamon Agent for run and test
+run / cinnamon := true
+test / cinnamon := true
+// Set the Cinnamon Agent log level
+cinnamonLogLevel := "INFO"
+cinnamonSuppressRepoWarnings := true
+
+
+
 
 //See: https://www.scala-sbt.org/sbt-native-packager/formats/docker.html
 //See: https://www.scala-sbt.org/sbt-native-packager/formats/universal.html#getting-started-with-universal-packaging
@@ -82,6 +93,24 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,//transitive to set
 
     "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.10",
-    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.10"
+    "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.10",
+
+    // Use Coda Hale Metrics
+    Cinnamon.library.cinnamonCHMetrics,
+    // Use Akka instrumentation
+    Cinnamon.library.cinnamonAkka,
+    Cinnamon.library.cinnamonAkkaTyped,
+    Cinnamon.library.cinnamonAkkaPersistence,
+    Cinnamon.library.cinnamonAkkaStream,
+    Cinnamon.library.cinnamonAkkaProjection,
+    // Use Akka HTTP instrumentation
+    Cinnamon.library.cinnamonAkkaHttp,
+    // Use Akka gRPC instrumentation
+    Cinnamon.library.cinnamonAkkaGrpc,
+    // Prometheus
+    Cinnamon.library.cinnamonPrometheus,
+    Cinnamon.library.cinnamonPrometheusHttpServer,
+    // System
+    Cinnamon.library.cinnamonJvmMetricsProducer
   )
 }
