@@ -1,8 +1,6 @@
 # Overview
-This first part shows the minimal code to set up a cluster.  
-Most of this code is taken and re-adapted from 
-[this akka sample](https://developer.lightbend.com/start/?group=akka&project=akka-samples-cluster-sharding-scala).
-
+This service can be deployed on Kubernetes along with Cassandra and shows a minimal Akka Cluster - the first step
+towards a full service on the works (bike service).
 Opening a browser on [localhost](http://127.0.0.1:8084/monitor/monitor.html) will show the cluster.    
 
 # Quick Start
@@ -12,12 +10,14 @@ sbt run
 ```
 Then click [here](http://127.0.0.1:8084/monitor/monitor.html) to visualize the 3-node cluster.  
 
-See below for running nodes in separate JVMs.
+See [Run](#run) for more detailed instructions.
 
 
 # Run
 
 ## The Main Cluster
+
+There are different ways to run the cluster, the first two are for running locally and the third is for running on Kubernetes.
 
 ### 1. A 3-Node Cluster Running Locally
 The simplest way to run the service is from a terminal:
@@ -101,3 +101,21 @@ Each node's log will show its dynamic port opened for clients to connect to, say
 Shut down one of the nodes by pressing 'ctrl-c' in one of the terminal windows. 
 The other nodes will detect the failure after a while, which you can see in the log output in the other terminals.
 
+
+### 3. A Multi-Pod Node Cluster Deployed With Kubernetes
+
+After installing Docker Desktop and enabling Kubernetes, run:
+```
+./scripts/bikes.sh
+```
+For more detailed instructions, see [Kubernetes.md](docs/Kubernetes.md).
+
+Once the Kubernetes cluster is up, visualize it all at
+[http://127.0.0.1:8084/monitor/monitor.html](http://127.0.0.1:8084/monitor/monitor.html).
+
+#### Troubleshooting
+You may need to set `JAVA_HOME` to 1.8, if you get `java.net.SocketException: Socket closed` errors.
+
+## Shutting down and Cleanup
+
+See [Kubernetes](docs/Kubernetes.md) for CLI details and cleanup.

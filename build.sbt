@@ -1,6 +1,6 @@
 organization in ThisBuild := "me.rerun"
 name := """bikes"""
-version := "0.2"
+version := "0.2.2"
 
 scalaVersion := "2.13.5"
 lazy val akkaHttpVersion = "10.1.11"
@@ -11,6 +11,15 @@ classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.AllLibraryJars
 fork in run := true
 Compile / run / fork := true
 mainClass in (Compile, run) := Some("akka.sample.bikes.Main")
+
+enablePlugins(JavaServerAppPackaging)
+enablePlugins(DockerPlugin)
+
+//See: https://www.scala-sbt.org/sbt-native-packager/formats/docker.html
+//See: https://www.scala-sbt.org/sbt-native-packager/formats/universal.html#getting-started-with-universal-packaging
+dockerExposedPorts := Seq(8084, 8558, 2553)
+dockerEntrypoint := Seq("/opt/docker/bin/bikes", "2553")
+dockerEnvVars := Map("RUN_LOCALLY" -> "false")
 
 libraryDependencies ++= {
   Seq(
