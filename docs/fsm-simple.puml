@@ -1,0 +1,13 @@
+@startuml
+skinparam monochrome reverse
+
+title Reservation Lifecycle with Typed Actors and FSM
+[Alice] --> (INIT): POST /bike
+(INIT) --> (DOWNLOADING): download()
+(DOWNLOADING) --> (INIT): timeout
+
+(DOWNLOADING) --> (DOWNLOADED): download() \nreturned\nsuccessfully
+(DOWNLOADING) --> (DOWNLOADING): download() failed,\nretry 3 times
+(DOWNLOADING) --> (ERRORSTATE): timeout
+
+@enduml

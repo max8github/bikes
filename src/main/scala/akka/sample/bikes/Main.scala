@@ -1,5 +1,7 @@
 package akka.sample.bikes
 
+import akka.cluster.sharding.typed.ShardingEnvelope
+import akka.cluster.sharding.typed.scaladsl.{ ClusterSharding, Entity }
 import akka.sample.bikes.tree.GlobalTreeActor
 
 /**
@@ -40,6 +42,12 @@ object Main {
         implicit val classicSystem: classic.ActorSystem = context.system.toClassic
         val host = config.getString("bikes.httpHost")
         new BikeService(routes, host, httpPort)(context.system).start()
+
+        val shardingRegion = ClusterSharding(context.system).init(Entity(Bike.typeKey) { entityContext =>
+          Bike(entityContext.entityId)
+        })
+
+        shardingRegion ! ShardingEnvelope("bikeId001", DownloadCmd("bikeId001"))
 
         Behaviors.empty
       }
