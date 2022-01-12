@@ -1,0 +1,67 @@
+syntax = "proto3";
+import "scalapb/scalapb.proto";
+package akka.sample;
+
+option (scalapb.options) = {
+  no_default_values_in_constructor: false
+  preserve_unknown_fields: false
+};
+
+
+message DownloadCmd {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Command";
+  string blueprint = 1;
+}
+
+message GetStateCmd {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Command";
+  string bikeId = 1;
+  string replyTo = 2;
+}
+
+message OpCompleted {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Command";
+  string blueprint = 1;
+}
+
+message OpFailed {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Command";
+  string blueprint = 1;
+  string reason = 2;
+}
+
+
+message DownloadEvent {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Event";
+  string blueprint = 1;
+}
+
+message DownloadedEvt {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Event";
+  string blueprint = 1;
+}
+
+message ErrorEvent {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.Event";
+  string errorMessage = 1;
+}
+
+
+message InitState {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.State";
+}
+
+message DownloadingState {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.State";
+  string blueprint = 1;
+}
+
+message DownloadedState {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.State";
+  string blueprint = 1;
+}
+
+message ErrorState {
+  option (scalapb.message).extends = "akka.sample.bikes.Bike.State";
+  string message = 1;
+}

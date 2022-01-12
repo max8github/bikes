@@ -17,10 +17,9 @@ import scala.util.{ Failure, Random, Success }
 object Bike {
   val typeKey: EntityTypeKey[Command] = EntityTypeKey[Command]("Bike")
 
-  private sealed trait Event extends CborSerializable
-  private final case class DownloadEvent(blueprint: String) extends Event
-  private final case class DownloadedEvt(blueprint: String) extends Event
-  private final case class ErrorEvent(errorMessage: String, previousState: State, causeCommand: Command) extends Event
+  trait Event
+  trait Command
+  trait State
 
   private implicit def convertState(state: State) = {
     val st = state.getClass.getSimpleName
@@ -33,7 +32,7 @@ object Bike {
 
       def active(): Behavior[Command] = EventSourcedBehavior[Command, Event, State](
         persistenceId = PersistenceId(typeKey.name, bikeId),
-        emptyState = InitState,
+        emptyState = InitState(),
         commandHandler(context, bikeId), //commandHandler, given a context, is a function: (State, Operation) => Effect[Event, State],
         eventHandler(context, bikeId))
 
@@ -81,12 +80,13 @@ object Bike {
         Effect.persist(evt)
 
       case OpFailed(blueprint, errorMessage) =>
-        val evt = ErrorEvent(errorMessage, InitState, DownloadCmd(blueprint))
+        val evt = ErrorEvent(errorMessage)
         Effect.persist(evt)
     }
 
-    def returnState(id: String, state: State, replyTo: ActorRef[String]): Effect[Event, State] = {
-      replyTo ! state.toString
+    def returnState(id: String, state: State, replyTo: String): Effect[Event, State] = {
+      //      replyTo ! state.toString
+      //TODO have to use sharding here: sharding ! replyTo, where replyTo is not an actor ref but an entity id
       Effect.none
     }
 
@@ -97,7 +97,7 @@ object Bike {
 
       case (state, command) =>
         state match {
-          case InitState =>
+          case InitState() =>
             command match {
               case cmd: DownloadCmd => download(cmd)
               case _ => Effect.unhandled
@@ -115,7 +115,7 @@ object Bike {
               case _ => Effect.unhandled
             }
 
-          case ErrorState(_, offendingCommand, previousState) =>
+          case ErrorState(_) =>
             command match {
               case _ => Effect.unhandled
             }
@@ -127,11 +127,11 @@ object Bike {
     context.log.debug2("State for {} is now: {}", bikeId, state.getClass.getSimpleName)
     (state, event) match {
 
-      case (_, ErrorEvent(errorMsg, errState, command)) =>
-        ErrorState(errorMsg, command, errState)
+      case (_, ErrorEvent(errorMsg)) =>
+        ErrorState(errorMsg)
 
       case (state, _) => state match {
-        case InitState =>
+        case InitState() =>
           event match {
             case DownloadEvent(blueprint) => DownloadingState(blueprint);
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
@@ -151,7 +151,7 @@ object Bike {
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }
 
-        case ErrorState(_, _, _) =>
+        case ErrorState(_) =>
           event match {
             case _ => throw new IllegalStateException(s"unexpected event [$event] in state [$state]")
           }

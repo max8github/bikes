@@ -47,7 +47,7 @@ object Main {
           Bike(entityContext.entityId)
         })
 
-        shardingRegion ! ShardingEnvelope("bikeId001", DownloadCmd("bikeId001"))
+        //        shardingRegion ! ShardingEnvelope("bikeId001", DownloadCmd("bikeId001"))
 
         Behaviors.empty
       }

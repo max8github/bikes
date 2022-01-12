@@ -11,6 +11,9 @@ classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.AllLibraryJars
 Compile / run / fork := true
 Compile / mainClass := Some("akka.sample.bikes.Main")
 
+Compile / PB.targets := Seq(
+  scalapb.gen() -> (Compile / sourceManaged).value / "scalapb"
+)
 
 libraryDependencies ++= {
   Seq(
@@ -30,8 +33,8 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-cluster-typed"         % akkaVersion,
     "com.typesafe.akka" %% "akka-discovery" % akkaVersion,
 
-    "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.12.2",
-    "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,
+    // (optional) If you need scalapb/scalapb.proto or anything from google/protobuf/*.proto
+    "com.thesamet.scalapb" %% "scalapb-runtime" % scalapb.compiler.Version.scalapbVersion % "protobuf",
 
     "com.lightbend.akka.discovery" %% "akka-discovery-kubernetes-api" % "1.0.5",
     "com.lightbend.akka.management" %% "akka-management-cluster-bootstrap" % "1.0.5"
