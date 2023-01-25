@@ -1,25 +1,26 @@
 # Kubernetes Deployment
 
-The easiest way to get started with Kubernetes on Mac or Windows is probably [Docker Desktop](https://www.docker.com/products/docker-desktop).  
+[Docker Desktop](https://www.docker.com/products/docker-desktop) is one of the easiest way to get started with
+Kubernetes on Mac or Windows.  
 Other possible solutions are [Kind](https://kind.sigs.k8s.io/), [Minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/).  
-Here are quick instructions for a [Kubernetes](https://www.docker.com/products/kubernetes) cluster within [Docker Desktop](https://www.docker.com/products/docker-desktop).
+Here are quick instructions for a [Kubernetes](https://www.docker.com/products/kubernetes)
+cluster with [Docker Desktop](https://www.docker.com/products/docker-desktop).
 
-Install Docker, [enable](https://www.techrepublic.com/article/how-to-add-kubernetes-support-to-docker-desktop/) its Kubernetes
-plugin, then simply do:
+Install Docker, [enable](https://www.techrepublic.com/article/how-to-add-kubernetes-support-to-docker-desktop/)
+its Kubernetes plugin, then run:
 ```
 ./scripts/cassandra.sh
 ```
-Wait for cassandra to be up first, then:
+There is a manual step here (TODO: automate): you have to first apply `CQL` changes to Cassandra.
+There is a `DDL` file for that: ([cassandra.cql](../kubernetes/cassandra.cql)).
+See [Cassandra.md](Cassandra.md#seed-cassandra) for details: wait for cassandra to be up first, then run its DDL.  
+And then run [bikes.sh](../scripts/bikes.sh):
 ```
 ./scripts/bikes.sh
 ```
 
-> Note: you may get *'Circuit Breaker'* errors when deploying at first.
-> This may be because Cassandra is not up yet or has not fully finished communicating its set up with the Akka cluster.  
-> To resolve this, just wait a few minutes.
-
-The yaml deployment files are in directory [kubernetes](../kubernetes). They are separated in different scripts so that  
-can be incrementally deployed.
+The yaml deployment files are in directory [kubernetes](../kubernetes).  
+They are separated in different scripts so that they can be incrementally deployed.
 
 
 ## Script Description
@@ -72,7 +73,10 @@ kubectl get all -n bikes-cluster-1
 kubectl get namespaces
 kubectl cluster-info dump
 kubectl logs bikes-cluster-demo-86f4ff69f9-6k9dz
+kubectl logs --selector app=bikes-cluster-demo --tail=200
 lsof -i :8084
+
+kubectl wait --for=condition=ready pod -l app=bikes
 ```
 
 In order to destroy the entire kubernetes deployment, you can do:
@@ -81,4 +85,19 @@ In order to destroy the entire kubernetes deployment, you can do:
 # will delete all under that namespace:
 kubectl delete namespaces bikes-cluster-1
 ```
-but that will not remove teh volumes Cassandra used. In order to properly clean up Cassandra, see [here](Cassandra.md#cleanup).
+but that will not remove the volumes Cassandra used. In order to properly clean up Cassandra, see [here](Cassandra.md#cleanup).
+
+# Minikube
+## Random Notes
+With Minikube, the `provisioner` for cassandra's `StatefulSet` is not `docker.io/hostpath` but `k8s.io/minikube-hostpath`
+
+In order to load the generated bikes image into minikube:
+```shell
+sbt docker:publishLocal
+minikube image load bikes:0.3
+minikube image ls
+# which should produce something like:
+#    registry.k8s.io/pause:3.9
+#    ...
+#    docker.io/library/bikes:0.3
+```

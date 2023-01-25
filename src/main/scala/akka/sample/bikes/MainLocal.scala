@@ -9,14 +9,16 @@ import scala.util.Random
 import scala.util.control.NonFatal
 
 object MainLocal {
-  def main(args: Array[String]): Unit = {
+  def forMain(args: Array[String]): Unit = {
     val config = ConfigFactory.load("application_local.conf")
     val httpPort = config.getInt("bikes.httpPort")
+    val mngPort = config.getInt("akka.management.http.port")
 
     for {
       akkaPort <- calculatePorts(args, config)
       port <- attemptHttpPort(if (akkaPort == 2553) httpPort else s"80${10 + Random.nextInt(80)}".toInt)
-    } Main.startNode(configOverride(akkaPort, config), port)
+      managementPort <- attemptHttpPort(if (akkaPort == 2553) mngPort else s"85${59 + Random.nextInt(41)}".toInt)
+    } Main.startNode(configOverride(akkaPort, managementPort, config), port)
   }
 
   def attemptHttpPort(attempt: Int): Option[Int] = {
@@ -33,10 +35,12 @@ object MainLocal {
       ds.close()
   }
 
-  def configOverride(port: Int, config: Config): Config =
+  def configOverride(port: Int, mngPort: Int, config: Config): Config =
     ConfigFactory.parseString(
       s"""
        akka.remote.artery.canonical.port = $port
+       akka.management.http.port = $mngPort
+       akka.management.http.bind-port = $mngPort
         """).withFallback(config)
 
   def calculatePorts(args: Array[String], config: Config) = {

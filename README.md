@@ -1,3 +1,26 @@
+<!-- TOC -->
+* [Overview](#overview)
+* [Quick Start](#quick-start)
+* [Bikes Service](#bikes-service)
+  * [Implementation](#implementation)
+* [REST API](#rest-api)
+* [Run](#run)
+  * [The Main Cluster](#the-main-cluster)
+    * [1. A 3-Node Cluster Running Locally](#1-a-3-node-cluster-running-locally)
+      * [Dynamic BikeServer Ports](#dynamic-bikeserver-ports)
+    * [2. A 3-Node Cluster In Separate JVMs](#2-a-3-node-cluster-in-separate-jvms)
+      * [Dynamic BikeServer port](#dynamic-bikeserver-port)
+      * [Shutting down](#shutting-down)
+    * [3. A Multi-Pod Node Cluster Deployed With Kubernetes](#3-a-multi-pod-node-cluster-deployed-with-kubernetes)
+  * [Client](#client)
+    * [Curl](#curl)
+    * [Gatling Client](#gatling-client)
+      * [Troubleshooting](#troubleshooting)
+    * [Postman Client](#postman-client)
+  * [Shutting down and Cleanup](#shutting-down-and-cleanup)
+<!-- TOC -->
+
+
 # Overview
 This demo uses a number of Akka features: [Typed Actors](https://doc.akka.io/docs/akka/current/typed/index.html),
 [Akka Cluster Sharding](http://doc.akka.io/docs/akka/current/scala/typed/cluster-sharding.html),
@@ -158,13 +181,7 @@ First: install Cassandra and start it locally (see [more detail here](docs/Cassa
 
 >Note: without Cassandra, you can still run persistence by using an in-memory persistence storage, as shown [above](#quick-start), but you will not
 be able to maintain state of FSMs after crashes or cluster rebalancing: the entity actors will be restarted from their
-initial state.  
-
-In order to enable cassandra persistence, edit [application_local.conf](src/main/resources/application_local.conf)
-changing line `plugin = "akka.persistence.journal.inmem"` to:
-```
-    plugin = "cassandra-journal"
-```
+initial state.
 
 The simplest way to run the service is from a terminal:
 
@@ -196,7 +213,7 @@ same: each has a REST http server to talk to.
 
 It is more interesting to run cluster nodes in separate processes. Stop the application and then open three terminal windows.
 
->Note that if the backing store is in-memory and you kill a node to see rebalancing,
+>Note that if the backing store is in-memory, and you kill a node to see rebalancing,
 the entity actors will not necessarily restart from where they left off with their states.
 >To make sure you have entities restart from where they left off with their states,
 you must use a persistent store like Cassandra.
@@ -296,6 +313,21 @@ going to [http://127.0.0.1:8084/monitor/monitor.html](http://127.0.0.1:8084/moni
 
 #### Troubleshooting
 You may need to set `JAVA_HOME` to 1.8, if you get `java.net.SocketException: Socket closed` errors.
+
+When running locally, LMDB is used and a warning about unsafe operations is printed out at start:
+```
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.lmdbjava.ByteBufferProxy$AbstractByteBufferProxy (file:/.../lmdbjava-0.6.3.jar) to field java.nio.Buffer.address
+WARNING: Please consider reporting this to the maintainers of org.lmdbjava.ByteBufferProxy$AbstractByteBufferProxy
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+```
+The warning goes away by adding the VM options:
+```
+--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+```
+See [issue 42 Replace Unsafe and illegal reflection operations](https://github.com/lmdbjava/lmdbjava/issues/42)
+at LMBD java.
 
 
 ### Postman Client

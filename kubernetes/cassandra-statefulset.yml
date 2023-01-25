@@ -103,6 +103,6 @@ apiVersion: storage.k8s.io/v1
 metadata:
   name: fast
   namespace: bikes-cluster-1
-provisioner: docker.io/hostpath
+provisioner: k8s.io/minikube-hostpath
 parameters:
   type: pd-ssd
