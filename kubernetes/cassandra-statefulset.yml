@@ -21,7 +21,7 @@ spec:
       containers:
         - name: cassandra
           image: cassandra:3.11.14
-          imagePullPolicy: Always
+          imagePullPolicy: Never
           ports:
             - containerPort: 7000
               name: intra-node
@@ -75,7 +75,7 @@ spec:
               command:
                 - /bin/bash
                 - -c
-                - /ready-probe.sh
+                - echo "/ready-probe.sh :-)"
             initialDelaySeconds: 15
             timeoutSeconds: 5
           # These volume mounts are persistent. They are like inline claims,
@@ -93,16 +93,16 @@ spec:
         namespace: bikes-cluster-1
       spec:
         accessModes: [ "ReadWriteOnce" ]
-        storageClassName: fast
+        storageClassName: local-path
         resources:
           requests:
             storage: 1Gi
----
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: fast
-  namespace: bikes-cluster-1
-provisioner: k8s.io/minikube-hostpath
-parameters:
-  type: pd-ssd
+#---
+#kind: StorageClass
+#apiVersion: storage.k8s.io/v1
+#metadata:
+#  name: fast
+#  namespace: bikes-cluster-1
+#provisioner: k8s.io/minikube-hostpath
+#parameters:
+#  type: pd-ssd
