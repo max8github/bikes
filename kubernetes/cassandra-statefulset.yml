@@ -63,7 +63,7 @@ spec:
             - name: CASSANDRA_CLUSTER_NAME
               value: "K8Demo"
             - name: CASSANDRA_DC
-              value: "DC1-K8Demo"
+              value: "datacenter1"
             - name: CASSANDRA_RACK
               value: "Rack1-K8Demo"
             - name: POD_IP
@@ -75,6 +75,8 @@ spec:
               command:
                 - /bin/bash
                 - -c
+                # When using cqlsh as ready probe, it is slower than echo: cqlsh -e 'SELECT schema_version, release_version FROM  system.local'
+                # When using nodetool, it goes OOM: if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then exit 0; else exit 1; fi
                 - echo "/ready-probe.sh :-)"
             initialDelaySeconds: 15
             timeoutSeconds: 5
@@ -97,12 +99,4 @@ spec:
         resources:
           requests:
             storage: 1Gi
-#---
-#kind: StorageClass
-#apiVersion: storage.k8s.io/v1
-#metadata:
-#  name: fast
-#  namespace: bikes-cluster-1
-#provisioner: k8s.io/minikube-hostpath
-#parameters:
-#  type: pd-ssd
+
