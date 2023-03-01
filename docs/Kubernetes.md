@@ -79,6 +79,11 @@ lsof -i :8084
 kubectl wait --for=condition=ready pod -l app=bikes
 ```
 
+Get a [shell to the running](https://kubernetes.io/docs/tasks/debug/debug-application/get-shell-running-container/)
+container:
+```
+kubectl exec --stdin --tty shell-demo -- /bin/bash
+```
 In order to destroy the entire kubernetes deployment, you can do:
 
 ```shell script

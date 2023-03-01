@@ -164,4 +164,27 @@ sudo rm -rf /usr/local/var/lib/cassandra/*
 
 kubectl exec -it cassandra-0 -- nodetool status
 ```
+Check nodes status:
 
+```bash
+kubectl exec -it cassandra-0 -- nodetool status
+```
+
+Get a [shell to the running](https://kubernetes.io/docs/tasks/debug/debug-application/get-shell-running-container/)
+container:
+
+```bash
+kubectl exec --stdin --tty cassandra-0 -- /bin/bash
+```
+same as:
+```shell
+kubectl exec -it cassandra-0 -- /bin/bash
+```
+If we just want to connect `cqlsh`:
+```
+kubectl exec -it cassandra-0 -- cqlsh
+```
+If you want to connect from externally, get the URL with:
+```
+minikube service cassandra --url
+```
