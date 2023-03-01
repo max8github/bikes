@@ -1,0 +1,31 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config_map_bikes
+  namespace: bikes-cluster-1
+data:
+  persistence_cassandra.conf: |
+    datastax-java-driver {
+      basic {
+        contact-points = ["cassandra-0.cassandra.bikes-cluster-1.svc.cluster.local", "cassandra-1.cassandra.bikes-cluster-1.svc.cluster.local", "cassandra-2.cassandra.bikes-cluster-1.svc.cluster.local"]
+        load-balancing-policy.local-datacenter = "DC1-K8Demo"
+      }
+      advanced {
+        reconnect-on-init = true
+        resolve-contact-points = false
+      }
+    }
+  
+    akka {
+      persistence {
+        journal {
+          plugin = "akka.persistence.cassandra.journal"
+          auto-start-journals = ["akka.persistence.cassandra.journal"]
+        }
+    
+        snapshot-store {
+          plugin = "akka.persistence.cassandra.snapshot"
+        }
+      }
+    }

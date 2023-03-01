@@ -25,7 +25,7 @@ spec:
       containers:
         - name: bikes-cluster-demo
           # image version should match bikes version in build.sbt
-          image: bikes:0.5.1
+          image: bikes:0.5.3.3
           imagePullPolicy: Never
           readinessProbe:
             httpGet:
@@ -52,8 +52,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
-            - name: CASSANDRA_CONTACT_POINT1
-              value: "cassandra:9042"
+#            - name: CASSANDRA_CONTACT_POINT1
+#              value: "cassandra:9042"
 ---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
