@@ -161,5 +161,7 @@ brew info cassandra
 ls /usr/local/var/lib/cassandra/data
 ls /usr/local/var/lib/cassandra/data/akka
 sudo rm -rf /usr/local/var/lib/cassandra/*
+
+kubectl exec -it cassandra-0 -- nodetool status
 ```
 
