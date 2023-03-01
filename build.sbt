@@ -6,7 +6,7 @@ ThisBuild / organization := "me.rerun"
 
 name := """bikes"""
 
-version := "0.5.3.1"
+version := "0.5.3.2"
 
 scalaVersion := "2.13.5"
 lazy val akkaHttpVersion = "10.4.0"

@@ -16,7 +16,7 @@ services:
       - ../kubernetes/cassandra.cql:/cassandra.cql:ro
     command: bin/bash -c "echo Initializing cassandra schema... && sleep 30 && cqlsh -u cassandra -p cassandra -f cassandra.cql bikes-cassandra-db"
   bikes:
-    image: bikes:0.5.3.1
+    image: bikes:0.5.3.2
     container_name: bikes
     depends_on:
       - bikes-cassandra-init
