@@ -14,7 +14,7 @@ In [MainLocal.scala](../src/main/scala/akka/sample/bikes/MainLocal.scala) hard-c
 ```
 so to use [application_local_cassandra.conf](../src/main/resources/application_local_cassandra.conf)
 instead of [application_local.conf](../src/main/resources/application_local.conf).  
-TODO (improvement): it should instead be passed at runtime by using something like
+> TODO (improvement): it should instead be passed at runtime by using something like  
 `-Dresource.config=application_local_cassandra.conf`.  
 TODO: the ddl should be included for when running on k9.
 
@@ -68,10 +68,14 @@ NAME                 PROVISIONER          RECLAIMPOLICY   VOLUMEBINDINGMODE   AL
 fast                 docker.io/hostpath   Delete          Immediate           false                  15m
 hostpath (default)   docker.io/hostpath   Delete          Immediate           false                  8h
 ```
-and the log of one pod (one of the cassandra nodes) looks like [this one](resources/cassandra-0.log.md).  
-Note that the `Provisioner` being used here is `docker.io/hostpath`. For minikube it would instead be
-`k8s.io/minikube-hostpath`. For Rancher Desktop, you would not specify the `StorageClass` in file
-`cassandra-statefulset.yml`: you would just set `storageClassName` to `local-path` in `spec.volumeClaimTemplates`.
+and the log of one pod (one of the cassandra nodes) looks like [this one](resources/cassandra-0.log.md).
+
+Note that the `provisioner` being used here is `docker.io/hostpath`
+(see `StorageClass` object named `fast` in file [storageclass.yml](../kubernetes/storageclass.yml)).  
+For minikube, `provisioner` would set to `k8s.io/minikube-hostpath`.  
+For Rancher Desktop, you would not even specify the `StorageClass` (named `fast`) in a separate file:
+for the `StatefulSet`, you would just set `spec.volumeClaimTemplates.spec.storageClassName` to `local-path`
+(see [cassandra-statefulset.yml](../kubernetes/cassandra-statefulset.yml).
 
 ## Seed Cassandra
 In order to prepare Cassandra with all necessary tables, its DDL specified in file [cassandra.cql](cassandra.cql)
@@ -137,7 +141,7 @@ The last command will delete the
 
 
 ## Troubleshooting
-The Java version should be 1.8. To change it on Mac, use [sdkman](https://sdkman.io/).  
+The Java version should be 11. To change it on Mac, use [sdkman](https://sdkman.io/).  
 See also [change version of java on mac](https://stackoverflow.com/questions/21964709/how-to-set-or-change-the-default-java-jdk-version-on-os-x)
 
 Various useful commands:
@@ -188,3 +192,17 @@ If you want to connect from externally, get the URL with:
 ```
 minikube service cassandra --url
 ```
+### Out of Memory Issues
+Cassandra pods can easily go out of memory.  
+They also appear to have issues using nodetool in ready probes.  
+Care must be taken when setting probe time parameters (see comment in
+[cassandra-statefulset.yml](../kubernetes/cassandra-statefulset.yml) ).
+
+### Other issues
+
+- ****[Assign Memory Resources to Containers and Pods](https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/)****
+- **[CASSANDRA OPERATOR POD IS BEING CONSTANTLY RESTARTED DUE TO OOM](https://www.ibm.com/support/pages/apar/LI80538) (OOMKilled)**
+- [Kubernetes and the JVM](https://xebia.com/blog/kubernetes-and-the-jvm/)
+- [readiness probe](https://github.com/docker-library/cassandra/issues/240)
+- [kubernetes examples/cassandra](https://github.com/kubernetes/examples) in github
+- [Official Image](https://hub.docker.com/_/cassandra), [Dockerfile](https://github.com/docker-library/cassandra/tree/master/3.11)

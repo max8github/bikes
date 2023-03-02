@@ -2,7 +2,8 @@
 
 [Docker Desktop](https://www.docker.com/products/docker-desktop) is one of the easiest way to get started with
 Kubernetes on Mac or Windows.  
-Other possible solutions are [Kind](https://kind.sigs.k8s.io/), [Minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/).  
+Other possible solutions are [Kind](https://kind.sigs.k8s.io/), [Minikube](https://kubernetes.io/docs/tasks/tools/install-minikube/),
+[Rancher Desktop](https://rancherdesktop.io/).
 Here are quick instructions for a [Kubernetes](https://www.docker.com/products/kubernetes)
 cluster with [Docker Desktop](https://www.docker.com/products/docker-desktop).
 

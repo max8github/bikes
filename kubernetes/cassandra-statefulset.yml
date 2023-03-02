@@ -21,7 +21,7 @@ spec:
       containers:
         - name: cassandra
           image: cassandra:3.11.14
-          imagePullPolicy: Never
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 7000
               name: intra-node
@@ -75,11 +75,19 @@ spec:
               command:
                 - /bin/bash
                 - -c
-                # When using cqlsh as ready probe, it is slower than echo: cqlsh -e 'SELECT schema_version, release_version FROM  system.local'
-                # When using nodetool, it goes OOM: if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then exit 0; else exit 1; fi
+                # We could use `nodetool` in the next probing command like this:
+                # if [[ $(nodetool status | grep $POD_IP) == *"UN"* ]]; then exit 0; else exit 1; fi
+                # but then Kubernetes will issue OOMKilled for not-so-clear-yet reasons.
+                # Command `nodetool` can be used, but then `initialDelaySeconds`, `timeoutSeconds` and `periodSeconds`
+                # should be set carefully and accordingly.
+                # See https://blog.colinbreck.com/kubernetes-liveness-and-readiness-probes-how-to-avoid-shooting-yourself-in-the-foot/
+                # Another ready probe command, using `cqlsh`, which is faster than `nodetool`, could be:
+                # cqlsh -e 'SELECT schema_version, release_version FROM  system.local'
+                # Again, params `initialDelaySeconds`, `timeoutSeconds` and `periodSeconds` should be chosen wisely.
                 - echo "/ready-probe.sh :-)"
             initialDelaySeconds: 15
-            timeoutSeconds: 5
+            timeoutSeconds: 25
+            periodSeconds: 30
           # These volume mounts are persistent. They are like inline claims,
           # but not exactly because the names need to match exactly one of
           # the stateful pod volumes.

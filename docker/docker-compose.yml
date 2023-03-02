@@ -1,8 +1,8 @@
+# WIP: currently it does not work. The idea here is to understand how to seed cassandra before deploying...
 version: '3'
-
 services:
   bikes-cassandra-database:
-    image: cassandra:3.11.5
+    image: cassandra:3.11.14
     container_name: bikes-cassandra-db
     restart: always
     ports: 
