@@ -2,7 +2,8 @@
 	"info": {
 		"_postman_id": "d45e4c90-24ae-4690-a361-b0ac4075f1e2",
 		"name": "BikeService",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1644939"
 	},
 	"item": [
 		{
@@ -239,6 +240,112 @@
 						"bike"
 					]
 				}
+			},
+			"response": []
+		},
+		{
+			"name": "READY",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:8558/ready",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "8558",
+					"path": [
+						"ready"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "CLUSTER MEM",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:8558/cluster/members",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "8558",
+					"path": [
+						"cluster",
+						"members"
+					]
+				},
+				"description": "See [Akka Management](https://doc.akka.io/docs/akka-management/current/cluster-http-management.html)"
 			},
 			"response": []
 		},
