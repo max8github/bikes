@@ -3,19 +3,20 @@ import com.typesafe.sbt.packager.docker.DockerChmodType
 ThisBuild / organization := "me.rerun"
 
 //resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += "Akka library repository".at("https://repo.akka.io/maven")
 
 name := """bikes"""
 
 version := "0.5.3.3"
 
-scalaVersion := "2.13.5"
-lazy val akkaHttpVersion = "10.4.0"
-lazy val akkaVersion    = "2.7.0"
+scalaVersion := "2.13.15"
+lazy val akkaHttpVersion = "10.7.0"
+lazy val akkaVersion    = "2.10.3"
 lazy val akkaCassandraVersion    = "1.1.0"
-val akkaManagementVersion = "1.2.0"
+val akkaManagementVersion = "1.6.0"
 lazy val scalatestVersion = "3.2.15"
 val gatlingBundleName = "gatling-charts-highcharts-bundle"
-val gatlingVersion = "3.5.1"
+val gatlingVersion = "3.13.1"
 
 enablePlugins(GatlingPlugin)
 
@@ -51,13 +52,13 @@ dockerAdditionalPermissions += (DockerChmodType.UserGroupWriteExecute, "/opt/doc
 libraryDependencies ++= {
   Seq(
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-    "ch.qos.logback" % "logback-classic" % "1.4.5",
+    "ch.qos.logback" % "logback-classic" % "1.5.18",
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
     "org.scalatest" %% "scalatest" % scalatestVersion % Test,
     "org.scalatest" %% "scalatest-wordspec" % scalatestVersion % Test,
     "io.gatling.highcharts" % "gatling-charts-highcharts" % gatlingVersion % Test,
     "io.gatling" % "gatling-test-framework" % gatlingVersion % Test,
-    "io.gatling.highcharts" % gatlingBundleName % gatlingVersion artifacts (Artifact(gatlingBundleName, "zip", "zip", "bundle")) exclude("com.github.scopt", "scopt_2.10"),
+//    "io.gatling.highcharts" % gatlingBundleName % gatlingVersion artifacts (Artifact(gatlingBundleName, "zip", "zip", "bundle")) exclude("com.github.scopt", "scopt_2.10"),
 
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,

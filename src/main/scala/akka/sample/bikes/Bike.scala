@@ -95,7 +95,7 @@ object Bike {
       val evt = DownloadEvent(cmd.blueprint)
       Effect.persist(evt).thenRun { newState =>
         val path = fullPath(cmd.blueprint.makeEntityId(), context.system)
-        context.log.infoN("Blueprint {} with\n\t\t\tmember {},\n\t\t\tshard {}\n\t\t\tis being downloaded", cmd.blueprint.displayId, path.memberId, path.shardId)
+        context.log.info("Blueprint {} with\n\t\t\tmember {},\n\t\t\tshard {}\n\t\t\tis being downloaded", cmd.blueprint.displayId, path.memberId, path.shardId)
         globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
       }
     }
@@ -104,7 +104,7 @@ object Bike {
       case OpCompleted(blueprint) =>
         val evt = DownloadedEvt(blueprint)
         Effect.persist(evt).thenRun { newState =>
-          context.log.info2("Blueprint {} downloaded, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("Blueprint {} downloaded, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           // todo (optional): can possibly use [Replies](https://doc.akka.io/docs/akka/current/typed/persistence.html#replies)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
@@ -114,7 +114,7 @@ object Bike {
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, InitState, DownloadCmd(blueprint))
         Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while downloading blueprint {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("ERROR while downloading blueprint {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         } //.thenStop()
@@ -135,7 +135,7 @@ object Bike {
         //OpCompleted from a real service should contain also location information. Generate randomly here
         val evt = CreatedEvt(blueprint, NiUri(UUID.randomUUID().toString, s"www.bikes.com/locations/${blueprint.makeEntityId()}"))
         Effect.persist(evt).thenRun { newState =>
-          context.log.info2("Bike {} created, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("Bike {} created, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
           context.self ! ReserveCmd
@@ -144,7 +144,7 @@ object Bike {
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, DownloadedState(blueprint), CreateCmd(blueprint))
         Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while creating bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("ERROR while creating bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         }
@@ -169,7 +169,7 @@ object Bike {
       case OpCompleted(blueprint) =>
         val evt = ReservedEvt(blueprint)
         Effect.persist(evt).thenRun { newState =>
-          context.log.info2("Bike {} reserved, state is now {}", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("Bike {} reserved, state is now {}", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         }
@@ -177,7 +177,7 @@ object Bike {
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, CreatedState(blueprint, location), ReserveCmd)
         Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while reserving Bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("ERROR while reserving Bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         }
@@ -197,7 +197,7 @@ object Bike {
       case OpCompleted(blueprint) =>
         val evt = YieldedEvt(blueprint)
         Effect.persist(evt).thenRun { newState =>
-          context.log.info2("Bike {} yielded, state is now {}", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("Bike {} yielded, state is now {}", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         }
@@ -205,7 +205,7 @@ object Bike {
       case OpFailed(blueprint, errorMessage) =>
         val evt = ErrorEvent(errorMessage, ReservedState(blueprint, location), YieldCmd)
         Effect.persist(evt).thenRun { newState: State =>
-          context.log.info2("ERROR while reserving bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
+          context.log.info("ERROR while reserving bike {}, state is now {} ", blueprint.displayId, newState.getClass.getSimpleName)
           val path = fullPath(blueprint, context.system)
           globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
         }
@@ -214,10 +214,10 @@ object Bike {
     def kickIt(commandToReIssue: Command, previousState: State): Effect[Event, State] = {
       val evt = KickEvent(previousState)
       Effect.persist(evt).thenRun { newState =>
-        context.log.info2("Blocked bike kicked, state is now {}, commandToReIssue {} ", newState.getClass.getSimpleName, commandToReIssue.getClass.getSimpleName)
+        context.log.info("Blocked bike kicked, state is now {}, commandToReIssue {} ", newState.getClass.getSimpleName, commandToReIssue.getClass.getSimpleName)
         val path = fullPath(bikeId, context.system)
         globalTreeRef ! GlobalTreeActor.AddEntity(path, newState)
-        context.log.info2("About to reissue command {} from state {} ", commandToReIssue.getClass.getSimpleName, newState.getClass.getSimpleName)
+        context.log.info("About to reissue command {} from state {} ", commandToReIssue.getClass.getSimpleName, newState.getClass.getSimpleName)
         context.self ! commandToReIssue
       }
     }
@@ -323,7 +323,7 @@ object Bike {
   }
 
   private def eventHandler(context: ActorContext[Command], bikeId: String): (State, Event) => State = { (state, event) =>
-    context.log.debug2("State for {} is now: {}", bikeId, state.getClass.getSimpleName)
+    context.log.debug("State for {} is now: {}", bikeId, state.getClass.getSimpleName)
     (state, event) match {
 
       case (_, ErrorEvent(errorMsg, errState, command)) =>

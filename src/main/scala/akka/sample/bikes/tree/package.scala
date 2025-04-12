@@ -115,7 +115,7 @@ package object tree {
   def removeEntity(root: Node, path: NodePath): Node = {
     findShardFromRoot(root, path.shardId) match {
       case None =>
-        log.debug2("ERROR: bike $memberId ** {} ** {} not found while calling removeEntity(), returning root", path.shardId, path.entityId)
+        log.debug("ERROR: bike $memberId ** {} ** {} not found while calling removeEntity(), returning root", path.shardId, path.entityId)
         root
       case Some(n) =>
         n.children = n.children.filterNot(_.name == path.entityId)

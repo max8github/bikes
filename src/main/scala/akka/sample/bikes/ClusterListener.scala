@@ -38,7 +38,7 @@ object ClusterListener {
               treeActor ! GlobalTreeActor.AddMember(member.address.toString, changeEvent.getClass.getSimpleName)
             case MemberRemoved(member, previousStatus) =>
               treeActor ! GlobalTreeActor.RemoveMember(member.address.toString)
-              ctx.log.info2("Member is Removed: {} after {}", member.address, previousStatus)
+              ctx.log.info("Member is Removed: {} after {}", member.address, previousStatus)
             case MemberJoined(member) =>
               treeActor ! GlobalTreeActor.AddMember(member.address.toString, changeEvent.getClass.getSimpleName)
               ctx.log.info("Member is Joined: {}", member.address)
